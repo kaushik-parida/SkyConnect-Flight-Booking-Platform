@@ -1,84 +1,61 @@
-# =========================
+# ======================
 # Java / Spring Boot
-# =========================
-
-# Compiled class files
-*.class
-
-# Log files
+# ======================
+target/
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files
+*.class
 *.jar
 *.war
-*.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
-# Maven / Gradle
-target/
-build/
-*.iml
-.idea/
-*.ipr
-*.iws
-.gradle/
-out/
+# Maven Wrapper logs
+.mvn/wrapper/maven-wrapper.jar
 
-# Eclipse
-.project
-.classpath
+# ======================
+# IDE Files
+# ======================
+.metadata/
 .settings/
+.classpath
+.project
+.factorypath
+*.launch
+
+# IntelliJ
+.idea/
+*.iml
 
 # VS Code
 .vscode/
 
-# =========================
-# Eclipse Workspace Junk 
-# =========================
-.metadata/
-**/.metadata/
-.factorypath
-**/.factorypath
-
-# =========================
-# Node / React
-# =========================
-
-# Node modules
-frontend/node_modules/
-
-# npm logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build output
-frontend/build/
-
-# Local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Mac / Linux / Windows
+# ======================
+# OS Files
+# ======================
 .DS_Store
 Thumbs.db
 
-# Ignore all nested .gitignore and .gitattributes
-**/.gitignore
-**/.gitattributes
+# ======================
+# Node / React
+# ======================
+node_modules/
+build/
+dist/
 
-# BUT allow root ones
-!.gitignore
-!.gitattributes
+# ======================
+# Environment Files
+# ======================
+.env
+.env.local
+.env.*.local
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
+
+# ======================
+# Misc
+# ======================
+*.swp
+*.swo
