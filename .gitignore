@@ -2,41 +2,39 @@
 # Java / Spring Boot
 # =========================
 
-# Compiled class files
 *.class
-
-# Log files
 *.log
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files
+# Package files
 *.jar
 *.war
 *.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
-# Maven / Gradle
+# Build directories
 target/
 build/
-*.iml
-.idea/
-*.ipr
-*.iws
-.gradle/
 out/
+
+# =========================
+# Maven / Gradle
+# =========================
+.gradle/
+
+# =========================
+# IDE Files
+# =========================
 
 # Eclipse
 .project
 .classpath
 .settings/
+.metadata/
+.factorypath
+
+# IntelliJ
+.idea/
+*.iml
 
 # VS Code
 .vscode/
@@ -45,24 +43,46 @@ out/
 # Node / React
 # =========================
 
-# Node modules
-frontend/node_modules/
+node_modules/
+build/
+dist/
 
-# npm logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# =========================
+# Environment Files
+# =========================
 
-# Build output
-frontend/build/
-
-# Local env files
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
 
-# Mac / Linux / Windows
+# =========================
+# Logs
+# =========================
+
+logs/
+
+# =========================
+# OS Files
+# =========================
+
 .DS_Store
 Thumbs.db
+
+# =========================
+# Misc
+# =========================
+
+*.swp
+*.swo
+
+# =========================
+# Enforce Centralized Gitignore
+# =========================
+
+# Ignore all nested .gitignore and .gitattributes
+**/.gitignore
+**/.gitattributes
+
+# Allow only root ones
+!.gitignore
+!.gitattributes
