@@ -42,6 +42,14 @@ out/
 .vscode/
 
 # =========================
+# Eclipse Workspace Junk 
+# =========================
+.metadata/
+**/.metadata/
+.factorypath
+**/.factorypath
+
+# =========================
 # Node / React
 # =========================
 
@@ -66,3 +74,11 @@ frontend/build/
 # Mac / Linux / Windows
 .DS_Store
 Thumbs.db
+
+# Ignore all nested .gitignore and .gitattributes
+**/.gitignore
+**/.gitattributes
+
+# BUT allow root ones
+!.gitignore
+!.gitattributes
