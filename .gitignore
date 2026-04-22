@@ -1,25 +1,36 @@
-# ======================
+# =========================
 # Java / Spring Boot
-# ======================
-target/
-*.log
+# =========================
+
 *.class
+*.log
+
+# Package files
 *.jar
 *.war
+*.nar
 *.ear
 
-# Maven Wrapper logs
-.mvn/wrapper/maven-wrapper.jar
+# Build directories
+target/
+build/
+out/
 
-# ======================
+# =========================
+# Maven / Gradle
+# =========================
+.gradle/
+
+# =========================
 # IDE Files
-# ======================
-.metadata/
-.settings/
-.classpath
+# =========================
+
+# Eclipse
 .project
+.classpath
+.settings/
+.metadata/
 .factorypath
-*.launch
 
 # IntelliJ
 .idea/
@@ -28,34 +39,50 @@ target/
 # VS Code
 .vscode/
 
-# ======================
-# OS Files
-# ======================
-.DS_Store
-Thumbs.db
-
-# ======================
+# =========================
 # Node / React
-# ======================
+# =========================
+
 node_modules/
 build/
 dist/
 
-# ======================
+# =========================
 # Environment Files
-# ======================
+# =========================
+
 .env
 .env.local
 .env.*.local
 
-# ======================
+# =========================
 # Logs
-# ======================
-logs/
-*.log
+# =========================
 
-# ======================
+logs/
+
+# =========================
+# OS Files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
 # Misc
-# ======================
+# =========================
+
 *.swp
 *.swo
+
+# =========================
+# Enforce Centralized Gitignore
+# =========================
+
+# Ignore all nested .gitignore and .gitattributes
+**/.gitignore
+**/.gitattributes
+
+# Allow only root ones
+!.gitignore
+!.gitattributes
