@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 public class Airline {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
 	private String name;
 	private String logoUrl;
 	private String contactEmail;
