@@ -1,1 +1,16 @@
-/.metadata/
+# Java / Spring
+target/
+*.class
+
+# IDE files
+.metadata/
+.factorypath
+.project
+.classpath
+.settings/
+
+# Node
+node_modules/
+
+# VS Code
+.vscode/

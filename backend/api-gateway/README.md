@@ -1,2 +1,2 @@
-# API Gateway Service
-Responsibilities: Routing, request forwarding, Swagger/OpenAPI documentation, and deployment integration.
+  API Gateway Service
+ Routing, request forwarding and deployment integration.
