@@ -1,6 +1,6 @@
 module.exports = {
-  authServiceUrl: "http://localhost:3001",
-  flightServiceUrl: "http://localhost:3002",
+  authServiceUrl: "http://localhost:3003",
+  flightServiceUrl: "http://localhost:3003",
   bookingServiceUrl: "http://localhost:3003",
-  airlineServiceUrl: "http://localhost:3004"
+  airlineServiceUrl: "http://localhost:3003"
 };

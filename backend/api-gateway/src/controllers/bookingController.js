@@ -9,10 +9,13 @@ exports.getTicket = async (request, response) => {
     const data = await bookingService.getTicket(pnr);
 
     response.json(data);
-  } catch (err) {
-    console.log("Booking error:", err.message);
 
-    response.status(500).json({ message: "Failed to get ticket" });
+  } catch (error) {
+    console.error("Error in getTicket:", error.message);
+
+    response.status(500).json({
+      message: "Failed to get ticket"
+    });
   }
 };
 
@@ -25,9 +28,12 @@ exports.getHistory = async (request, response) => {
     const data = await bookingService.getHistory(email);
 
     response.json(data);
-  } catch (err) {
-    console.log("History error:", err.message);
 
-    response.status(500).json({ message: "Failed to get history" });
+  } catch (error) {
+    console.error("Error in getHistory:", error.message);
+
+    response.status(500).json({
+      message: "Failed to get booking history"
+    });
   }
 };

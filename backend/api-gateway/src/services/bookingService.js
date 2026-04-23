@@ -1,13 +1,42 @@
-const bookingRepo = require("../repositories/bookingRepository");
+const axios = require("axios");
+const { bookingServiceUrl } = require("../config/services");
 
 exports.getTicket = async (pnr) => {
-  if (!pnr) throw new Error("PNR missing");
+  try {
+    if (!pnr) {
+      throw new Error("PNR is required");
+    }
 
-  return await bookingRepo.getTicket(pnr);
+    console.log("Calling JSON Server for ticket");
+
+    const response = await axios.get(
+      `${bookingServiceUrl}/tickets/${pnr}`
+    );
+
+    return response.data;
+
+  } catch (error) {
+    console.error("Service error (ticket):", error.code || error.message);
+    throw error;
+  }
 };
 
 exports.getHistory = async (email) => {
-  if (!email) throw new Error("Email missing");
+  try {
+    if (!email) {
+      throw new Error("Email is required");
+    }
 
-  return await bookingRepo.getHistory(email);
+    console.log("Calling JSON Server for history");
+
+    const response = await axios.get(
+      `${bookingServiceUrl}/history?email=${email}`
+    );
+
+    return response.data;
+
+  } catch (error) {
+    console.error("Service error (history):", error.code || error.message);
+    throw error;
+  }
 };
