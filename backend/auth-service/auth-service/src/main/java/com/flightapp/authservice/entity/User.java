@@ -1,7 +1,19 @@
 package com.flightapp.authservice.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.time.LocalDate;
 
@@ -14,33 +26,27 @@ import java.time.LocalDate;
 @Builder
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    // 🔹 Existing
-    @Column(nullable = false, unique = true)
-    private String username;
+	@Column(nullable = false, unique = true)
+	private String email;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+	@Column(nullable = false)
+	private String password;
 
-    @Column(nullable = false)
-    private String password;
+	@Enumerated(EnumType.STRING)
+	private Role role;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+	private boolean enabled = true;
 
-    private boolean enabled = true;
+	@Column(nullable = false)
+	private String fullName;
 
-    // 🔥 NEW FIELDS (as per requirement)
+	private String phoneNumber;
 
-    @Column(nullable = false)
-    private String fullName;
+	private String gender;
 
-    private String phoneNumber;
-
-    private String gender;
-
-    private LocalDate dateOfBirth;
+	private LocalDate dateOfBirth;
 }

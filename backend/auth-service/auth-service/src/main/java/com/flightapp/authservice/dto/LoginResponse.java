@@ -7,9 +7,9 @@ import lombok.Data;
 @Builder
 public class LoginResponse {
 
-    private String token;
-    private String tokenType;
-    private long expiresIn;
-    private String role;
-    private UserInfo user;
+	private String token;
+	private String tokenType;
+	private long expiresIn;
+	private String role;
+	private UserInfo user;
 }

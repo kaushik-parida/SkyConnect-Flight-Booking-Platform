@@ -1,6 +1,11 @@
 package com.flightapp.authservice.service;
 
-import com.flightapp.authservice.dto.*;
+import com.flightapp.authservice.dto.CommonResponse;
+import com.flightapp.authservice.dto.LoginRequest;
+import com.flightapp.authservice.dto.LoginResponse;
+import com.flightapp.authservice.dto.SignupRequest;
+import com.flightapp.authservice.dto.SignupResponse;
+import com.flightapp.authservice.dto.UserInfo;
 import com.flightapp.authservice.entity.Role;
 import com.flightapp.authservice.entity.User;
 import com.flightapp.authservice.repository.UserRepository;
@@ -28,10 +33,10 @@ public class AuthServiceImpl implements AuthService {
 			throw new RuntimeException("Email already registered");
 		}
 
-		User user = User.builder().username(request.getEmail()).fullName(request.getFullName())
-				.email(request.getEmail()).password(passwordEncoder.encode(request.getPassword()))
-				.phoneNumber(request.getPhoneNumber()).gender(request.getGender())
-				.dateOfBirth(LocalDate.parse(request.getDateOfBirth())).role(Role.USER).enabled(true).build();
+		User user = User.builder().fullName(request.getFullName()).email(request.getEmail())
+				.password(passwordEncoder.encode(request.getPassword())).phoneNumber(request.getPhoneNumber())
+				.gender(request.getGender()).dateOfBirth(LocalDate.parse(request.getDateOfBirth())).role(Role.USER)
+				.enabled(true).build();
 
 		userRepository.save(user);
 

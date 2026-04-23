@@ -1,6 +1,10 @@
 package com.flightapp.authservice.controller;
 
-import com.flightapp.authservice.dto.*;
+import com.flightapp.authservice.dto.CommonResponse;
+import com.flightapp.authservice.dto.LoginRequest;
+import com.flightapp.authservice.dto.LoginResponse;
+import com.flightapp.authservice.dto.SignupRequest;
+import com.flightapp.authservice.dto.SignupResponse;
 import com.flightapp.authservice.service.AuthService;
 
 import jakarta.validation.Valid;
@@ -14,19 +18,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+	private final AuthService authService;
 
-    @PostMapping("/register")
-    public ResponseEntity<CommonResponse<SignupResponse>> register(
-            @Valid @RequestBody SignupRequest request) {
+	@PostMapping("/register")
+	public ResponseEntity<CommonResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request) {
+		return ResponseEntity.ok(authService.register(request));
+	}
 
-        return ResponseEntity.ok(authService.register(request));
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<CommonResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
-
-        return ResponseEntity.ok(authService.login(request));
-    }
+	@PostMapping("/login")
+	public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+		return ResponseEntity.ok(authService.login(request));
+	}
 }

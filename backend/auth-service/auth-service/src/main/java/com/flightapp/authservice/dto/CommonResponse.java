@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class CommonResponse<T> {
 
-    private boolean success;
-    private String message;
-    private T data;
+	private boolean success;
+	private String message;
+	private T data;
 }

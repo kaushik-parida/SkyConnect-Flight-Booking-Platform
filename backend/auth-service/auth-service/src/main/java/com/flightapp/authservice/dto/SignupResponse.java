@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class SignupResponse {
 
-    private Long userId;
-    private String email;
-    private String role;
+	private Long userId;
+	private String email;
+	private String role;
 }
