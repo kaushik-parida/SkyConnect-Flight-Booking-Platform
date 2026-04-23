@@ -6,6 +6,9 @@ import com.flightapp.flightservice.model.Flight;
 import com.flightapp.flightservice.repository.FlightRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 @Service
 @RequiredArgsConstructor
@@ -13,11 +16,25 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
     private final FlightRepository flightRepository;
     @Override
     public List<FlightResponse> searchFlights(FlightSearchRequest request) {
-        List<Flight> flights = flightRepository.findByFromPlaceIgnoreCaseAndToPlaceIgnoreCaseAndStatus(
-                        request.getFromPlace().trim(),
-                        request.getToPlace().trim(),
+    	if(request.getFrom().trim().equalsIgnoreCase(request.getTo().trim())) {
+    		throw new RuntimeException("Source and destination cant be the same");
+    	}
+    	if (request.getDate().isBefore(LocalDate.now())) {
+            throw new RuntimeException("Departure date cannot be in the past");
+        }
+    	LocalDateTime start = request.getDate().atStartOfDay();
+    	LocalDateTime end = request.getDate().atTime(23, 59,59);
+       
+    	List<Flight> flights = flightRepository.findByFromPlaceIgnoreCaseAndToPlaceIgnoreCaseAndDepartureTimeBetweenAndStatus(
+                        request.getFrom().trim(),
+                        request.getTo().trim(),
+                        start,
+                        end,
                         FlightStatus.ACTIVE
                 );
+    	if(flights.isEmpty()) {
+    		throw new RuntimeException("Noflights found for given route and date");
+    	}
         return flights.stream().map(this::mapToResponse).toList();
     }
     private FlightResponse mapToResponse(Flight flight) {

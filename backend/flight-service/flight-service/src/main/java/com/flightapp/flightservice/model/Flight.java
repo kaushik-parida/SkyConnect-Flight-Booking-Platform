@@ -22,9 +22,9 @@ public class Flight {
     private String flightNumber;
     @Column(nullable = false)
     private Long airlineId;
-    @Column(nullable = false, length = 80)
+    @Column(nullable = false,length=80)
     private String fromPlace;
-    @Column(nullable = false, length = 80)
+    @Column(nullable =false, length =100)
     private String toPlace;
     @Column(nullable = false)
     private LocalDateTime departureTime;

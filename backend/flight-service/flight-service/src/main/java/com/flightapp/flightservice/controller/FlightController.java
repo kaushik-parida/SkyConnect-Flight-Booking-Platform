@@ -8,6 +8,7 @@ import com.flightapp.flightservice.service.FlightSearchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,4 +25,10 @@ public class FlightController {
         List<FlightResponse> flights = flightSearchService.searchFlights(request);
         return ResponseEntity.ok(flights);
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleNotFound(RuntimeException exception){
+    	return ResponseEntity.status(404).build();
+    }
+
 }
