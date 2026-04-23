@@ -2,17 +2,21 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "main", "develop", "feature/*" ]
+    branches: [ "main", "develop", "feature/**" ]
   pull_request:
     branches: [ "main", "develop" ]
 
 jobs:
-  build-booking-service:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [flight-service, airline-service, auth-service, booking-service, api-gateway]
 
     defaults:
       run:
-        working-directory: backend/booking-service
+        working-directory: backend/${{ matrix.service }}
 
     steps:
       - name: Checkout code
@@ -23,6 +27,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'maven'
 
-      - name: Build with Maven
+      - name: Build and Test
         run: mvn clean install
