@@ -2,5 +2,7 @@ package com.flightapp.flightservice.enums;
 
 public enum FlightStatus {
     ACTIVE,
-    INACTIVE
+    INACTIVE,
+    DELAYED,
+    CANCELLED
 }
