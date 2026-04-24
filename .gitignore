@@ -1,69 +1,16 @@
-# =========================
-# Java / Spring Boot
-# =========================
-
-*.class
-*.log
-
-# Package files
-*.jar
-*.war
-*.nar
-*.ear
-
-# Build directories
+# Java / Spring
 target/
-build/
-out/
+*.class
 
-# =========================
-# Maven / Gradle
-# =========================
-.gradle/
-
-# =========================
-# IDE Files
-# =========================
-
-# Eclipse
+# IDE files
+.metadata/
+.factorypath
 .project
 .classpath
 .settings/
-.metadata/
-.factorypath
 
-# IntelliJ
-.idea/
-*.iml
-
-# VS Code
-.vscode/
-
-# =========================
-# Node / React
-# =========================
-
+# Node
 node_modules/
-build/
-dist/
-
-# =========================
-# Environment Files
-# =========================
-
-.env
-.env.local
-.env.*.local
-
-# =========================
-# Logs
-# =========================
-
-logs/
-
-# =========================
-# OS Files
-# =========================
 
 .DS_Store
 Thumbs.db
