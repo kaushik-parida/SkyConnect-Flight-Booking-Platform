@@ -24,7 +24,7 @@ import com.flightapp.booking.dto.PassengerRequest;
 import com.flightapp.booking.service.BookingService;
 
 @WebMvcTest(BookingController.class)
-class GlobalExceptionHandlerTest {
+public class GlobalExceptionHandlerTest {
 
 	@Autowired
 	private MockMvc mockMvc;

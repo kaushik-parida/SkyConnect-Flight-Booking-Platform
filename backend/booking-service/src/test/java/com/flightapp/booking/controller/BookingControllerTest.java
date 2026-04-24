@@ -30,7 +30,7 @@ import com.flightapp.booking.model.BookingStatus;
 import com.flightapp.booking.service.BookingService;
 
 @WebMvcTest(BookingController.class)
-class BookingControllerTest {
+public class BookingControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;

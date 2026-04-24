@@ -24,7 +24,7 @@ import com.flightapp.booking.exception.FlightServiceUnavailableException;
 import reactor.core.publisher.Mono;
 
 @ExtendWith(MockitoExtension.class)
-class FlightServiceClientTest {
+public class FlightServiceClientTest {
 
 	@Mock
 	private WebClient webClient;

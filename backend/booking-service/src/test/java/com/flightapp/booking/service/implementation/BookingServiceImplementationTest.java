@@ -38,7 +38,7 @@ import com.flightapp.booking.model.BookingStatus;
 import com.flightapp.booking.repository.BookingRepository;
 
 @ExtendWith(MockitoExtension.class)
-class BookingServiceImplementationTest {
+public class BookingServiceImplementationTest {
 
 	@Mock
 	private BookingRepository bookingRepository;
