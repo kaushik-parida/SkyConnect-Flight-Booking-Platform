@@ -1,8 +1,10 @@
 package com.flightapp.airlineservice.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
+
 import com.flightapp.airlineservice.dto.AirlineResponse;
 import com.flightapp.airlineservice.dto.CreateAirlineRequest;
 import com.flightapp.airlineservice.entity.Airline;
@@ -33,5 +35,15 @@ public class AirlineServiceImpl implements AirlineService {
 
 		return AirlineResponse.builder().airlineId(saved.getAirlineId()).airlineName(saved.getAirlineName())
 				.airlineCode(saved.getAirlineCode()).isBlocked(saved.isBlocked()).build();
+	}
+
+	@Override
+	public List<AirlineResponse> getAllAirlines() {
+
+		List<Airline> airlines = airlineRepository.findAll();
+
+		return airlines.stream().map(a -> AirlineResponse.builder().airlineId(a.getAirlineId())
+				.airlineName(a.getAirlineName()).airlineCode(a.getAirlineCode()).isBlocked(a.isBlocked()).build())
+				.toList();
 	}
 }
