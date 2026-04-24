@@ -1,0 +1,3 @@
+{
+  "/flights/:id/reduce-seats": "/flights/:id"
+}

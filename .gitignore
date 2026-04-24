@@ -14,3 +14,53 @@ node_modules/
 
 # VS Code
 .vscode/
+
+# =========================
+# Node / React
+# =========================
+
+node_modules/
+build/
+dist/
+
+# =========================
+# Environment Files
+# =========================
+
+.env
+.env.local
+.env.*.local
+
+# =========================
+# Logs
+# =========================
+
+logs/
+
+# =========================
+# OS Files
+# =========================
+
+.DS_Store
+Thumbs.db
+
+# =========================
+# Misc
+# =========================
+
+*.swp
+*.swo
+
+# =========================
+# Enforce Centralized Gitignore
+# =========================
+
+# Ignore all nested .gitignore and .gitattributes
+**/.gitignore
+**/.gitattributes
+
+# Allow only root ones
+!.gitignore
+!.gitattributes
+
+src/main/resources/application-local.properties

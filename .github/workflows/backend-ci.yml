@@ -2,17 +2,21 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "main", "develop", "feature/*" ]
+    branches: [ "main", "dev", "feature/**" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "dev" ]
 
 jobs:
-  build-booking-service:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [booking-service]
 
     defaults:
       run:
-        working-directory: backend/booking-service
+        working-directory: backend/${{ matrix.service }}
 
     steps:
       - name: Checkout code
@@ -23,6 +27,15 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'maven'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build and Test
+        run: mvn clean install -B
