@@ -1,0 +1,50 @@
+{
+  "flights": [
+    {
+      "id": "1",
+      "flightId": 1,
+      "flightNumber": "6E-2341",
+      "airlineId": 101,
+      "fromPlace": "Mumbai",
+      "toPlace": "Delhi",
+      "departureTime": "2026-05-01T06:00:00",
+      "arrivalTime": "2026-05-01T08:10:00",
+      "economySeats": 180,
+      "businessSeats": 0,
+      "availableSeats": 32,
+      "ticketCost": 4500,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "2",
+      "flightId": 2,
+      "flightNumber": "AI-505",
+      "airlineId": 102,
+      "fromPlace": "Delhi",
+      "toPlace": "Bangalore",
+      "departureTime": "2026-05-02T09:30:00",
+      "arrivalTime": "2026-05-02T12:00:00",
+      "economySeats": 200,
+      "businessSeats": 0,
+      "availableSeats": 0,
+      "ticketCost": 5200,
+      "status": "ACTIVE"
+    },
+    {
+      "id": "3",
+      "flightId": 3,
+      "flightNumber": "SG-101",
+      "airlineId": 103,
+      "fromPlace": "Bangalore",
+      "toPlace": "Hyderabad",
+      "departureTime": "2026-05-03T14:00:00",
+      "arrivalTime": "2026-05-03T15:15:00",
+      "economySeats": 150,
+      "businessSeats": 0,
+      "availableSeats": 110,
+      "ticketCost": 2800,
+      "status": "ACTIVE"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

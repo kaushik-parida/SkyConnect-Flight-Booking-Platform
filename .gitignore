@@ -86,3 +86,5 @@ Thumbs.db
 # Allow only root ones
 !.gitignore
 !.gitattributes
+
+src/main/resources/application-local.properties
