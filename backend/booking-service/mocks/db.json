@@ -9,9 +9,8 @@
       "toPlace": "Delhi",
       "departureTime": "2026-05-01T06:00:00",
       "arrivalTime": "2026-05-01T08:10:00",
-      "economySeats": 180,
+      "economySeats": 174,
       "businessSeats": 0,
-      "availableSeats": 32,
       "ticketCost": 4500,
       "status": "ACTIVE"
     },
@@ -24,9 +23,8 @@
       "toPlace": "Bangalore",
       "departureTime": "2026-05-02T09:30:00",
       "arrivalTime": "2026-05-02T12:00:00",
-      "economySeats": 200,
+      "economySeats": 0,
       "businessSeats": 0,
-      "availableSeats": 0,
       "ticketCost": 5200,
       "status": "ACTIVE"
     },
@@ -41,7 +39,6 @@
       "arrivalTime": "2026-05-03T15:15:00",
       "economySeats": 150,
       "businessSeats": 0,
-      "availableSeats": 110,
       "ticketCost": 2800,
       "status": "ACTIVE"
     }

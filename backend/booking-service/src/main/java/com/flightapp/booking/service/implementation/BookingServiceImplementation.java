@@ -2,9 +2,7 @@ package com.flightapp.booking.service.implementation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.flightapp.booking.client.FlightServiceClient;
-import com.flightapp.booking.dto.BookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
-import com.flightapp.booking.dto.PassengerResponse;
 import com.flightapp.booking.dto.external.FlightResponse;
 import com.flightapp.booking.exception.FlightNotActiveException;
 import com.flightapp.booking.exception.InsufficientSeatsException;
@@ -52,21 +48,24 @@ public class BookingServiceImplementation implements BookingService {
 			throw new FlightNotActiveException("Flight " + request.getFlightId() + " is not active");
 		}
 
-		if (flight.getAvailableSeats() < request.getNumberOfSeats()) {
-			throw new InsufficientSeatsException("Only " + flight.getAvailableSeats() + " seats available");
+		int numberOfSeats = request.getPassengers().size();
+
+		int availableSeats = flight.getEconomySeats() + flight.getBusinessSeats();
+
+		if (availableSeats < numberOfSeats) {
+			throw new InsufficientSeatsException("Only " + availableSeats + " seats available");
 		}
 
-		BigDecimal totalPrice = BigDecimal.valueOf(flight.getTicketCost())
-				.multiply(BigDecimal.valueOf(request.getNumberOfSeats()));
+		BigDecimal totalPrice = flight.getTicketCost().multiply(BigDecimal.valueOf(numberOfSeats));
 
 		Booking booking = Booking.builder().bookingRef(generateBookingRef()).userId(request.getUserId())
-				.flightId(request.getFlightId()).numberOfSeats(request.getNumberOfSeats()).totalPrice(totalPrice)
+				.flightId(request.getFlightId()).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
 				.status(BookingStatus.PENDING).build();
 
 		request.getPassengers().forEach(p -> {
 			BookingPassenger passenger = BookingPassenger.builder().firstName(p.getFirstName())
 					.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).dateOfBirth(p.getDateOfBirth())
-					.seatNumber(p.getSeatNumber()).mealPreference(parseMealPreference(p.getMealPreference())).build();
+					.mealPreference(parseMealPreference(p.getMealPreference())).build();
 			booking.addPassenger(passenger);
 		});
 
@@ -79,7 +78,7 @@ public class BookingServiceImplementation implements BookingService {
 		log.info("Booking persisted with PENDING status: {}", saved.getBookingRef());
 
 		try {
-			flightServiceClient.reduceSeats(request.getFlightId(), request.getNumberOfSeats());
+			flightServiceClient.reduceSeats(request.getFlightId(), numberOfSeats);
 
 			saved.setStatus(BookingStatus.CONFIRMED);
 			saved.getPayment().setPaymentStatus(PaymentStatus.SUCCESS);
@@ -106,18 +105,5 @@ public class BookingServiceImplementation implements BookingService {
 		} catch (IllegalArgumentException e) {
 			return MealPreference.NONE;
 		}
-	}
-
-	private BookingResponse mapToResponse(Booking booking) {
-		List<PassengerResponse> passengers = booking.getPassengers().stream()
-				.map(p -> PassengerResponse.builder().passengerId(p.getPassengerId()).firstName(p.getFirstName())
-						.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).dateOfBirth(p.getDateOfBirth())
-						.seatNumber(p.getSeatNumber()).mealPreference(p.getMealPreference().name()).build())
-				.collect(Collectors.toList());
-
-		return BookingResponse.builder().bookingId(booking.getBookingId()).bookingRef(booking.getBookingRef())
-				.flightId(booking.getFlightId()).userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())
-				.totalPrice(booking.getTotalPrice()).status(booking.getStatus()).bookingTime(booking.getBookingTime())
-				.passengers(passengers).build();
 	}
 }

@@ -43,7 +43,6 @@ public class GlobalExceptionHandlerTest {
 		CreateBookingRequest request = new CreateBookingRequest();
 		request.setFlightId(1L);
 		request.setUserId("USER-001");
-		request.setNumberOfSeats(1);
 		request.setPaymentMethod("UPI");
 		request.setPassengers(List.of(passenger));
 		return request;

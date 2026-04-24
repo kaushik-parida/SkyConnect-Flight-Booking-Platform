@@ -47,14 +47,25 @@ public class FlightServiceClient {
 				throw new FlightNotFoundException("Flight not found with id: " + flightId);
 			}
 
-			int updatedSeats = current.getAvailableSeats() - seatsToReduce;
+			int totalAvailable = current.getEconomySeats() + current.getBusinessSeats();
+
+			int updatedEconomySeats = Math.max(0, current.getEconomySeats() - seatsToReduce);
+
+			int remainingReduction = seatsToReduce - (current.getEconomySeats() - updatedEconomySeats);
+
+			int updatedBusinessSeats = Math.max(0, current.getBusinessSeats() - remainingReduction);
+
+			log.debug("Reducing seats for flight: {} | total available: {} | " + "economy: {} → {} | business: {} → {}",
+					flightId, totalAvailable, current.getEconomySeats(), updatedEconomySeats,
+					current.getBusinessSeats(), updatedBusinessSeats);
 
 			Map<String, Object> body = new HashMap<>();
-			body.put("availableSeats", updatedSeats);
+			body.put("economySeats", updatedEconomySeats);
+			body.put("businessSeats", updatedBusinessSeats);
 
 			webClient.patch().uri("/flights/{id}", flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
 
-			log.debug("Seats reduced for flight: {} new available: {}", flightId, updatedSeats);
+			log.debug("Seats reduced for flight: {} new available: {}", flightId);
 
 		} catch (FlightNotFoundException e) {
 			throw e;

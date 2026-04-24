@@ -1,5 +1,7 @@
 package com.flightapp.booking.dto.external;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 
 @Data
@@ -14,7 +16,6 @@ public class FlightResponse {
 	private String arrivalTime;
 	private Integer economySeats;
 	private Integer businessSeats;
-	private Integer availableSeats;
-	private Double ticketCost;
+	private BigDecimal ticketCost;
 	private String status;
 }

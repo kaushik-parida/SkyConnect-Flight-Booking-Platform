@@ -50,9 +50,6 @@ public class BookingPassenger {
 	@Column(name = "date_of_birth")
 	private LocalDate dateOfBirth;
 
-	@Column(name = "seat_number", length = 5)
-	private String seatNumber;
-
 	@Enumerated(EnumType.STRING)
 	@Column(name = "meal_preference", length = 20)
 	@Builder.Default

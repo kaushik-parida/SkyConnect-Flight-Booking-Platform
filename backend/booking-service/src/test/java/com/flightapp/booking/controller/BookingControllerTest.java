@@ -45,13 +45,11 @@ public class BookingControllerTest {
 		passenger.setFirstName("Rahul");
 		passenger.setLastName("Sharma");
 		passenger.setPassportNumber("P1234567");
-		passenger.setSeatNumber("12A");
 		passenger.setMealPreference("VEGETARIAN");
 
 		CreateBookingRequest request = new CreateBookingRequest();
 		request.setFlightId(1L);
 		request.setUserId("USER-001");
-		request.setNumberOfSeats(1);
 		request.setPaymentMethod("UPI");
 		request.setPassengers(List.of(passenger));
 		return request;

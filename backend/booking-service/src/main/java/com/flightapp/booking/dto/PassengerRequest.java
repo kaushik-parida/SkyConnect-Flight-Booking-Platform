@@ -18,8 +18,6 @@ public class PassengerRequest {
 
 	private LocalDate dateOfBirth;
 
-	private String seatNumber;
-
 	private String mealPreference;
 
 }
