@@ -1,7 +1,11 @@
 package com.flightapp.airlineservice.repository;
-import com.flightapp.airlineservice.entity.Airline;
+
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.List;
-public interface AirlineRepository extends JpaRepository<Airline,Long> {
-	List<Airline> findByActiveTrue();
+
+import com.flightapp.airlineservice.entity.Airline;
+public interface AirlineRepository extends JpaRepository<Airline, Long> {
+
+	Optional<Airline> findByAirlineCode(String airlineCode);
 }

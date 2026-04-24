@@ -1,9 +1,8 @@
 package com.flightapp.airlineservice.service;
-import com.flightapp.airlineservice.dto.AirlineDTO;
-import com.flightapp.airlineservice.entity.Airline;
-import java.util.List;
+
+import com.flightapp.airlineservice.dto.AirlineResponse;
+import com.flightapp.airlineservice.dto.CreateAirlineRequest;
 public interface AirlineService {
-	Airline registerAirline(AirlineDTO dto);
-	Airline blockAirline(Long id);
-	List<Airline> getAllActiveAirlines();
+
+	AirlineResponse createAirline(CreateAirlineRequest request);
 }
