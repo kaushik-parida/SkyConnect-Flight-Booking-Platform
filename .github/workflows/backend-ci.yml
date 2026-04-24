@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [booking-service, flight-service, auth-service]
+        service: [booking-service]
 
     defaults:
       run:
