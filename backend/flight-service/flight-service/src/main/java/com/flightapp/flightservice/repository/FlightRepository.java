@@ -13,4 +13,5 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
             LocalDateTime end,
             FlightStatus status
     );
+    boolean existsByFlightNumberIgnoreCase(String flightNumber);
 }
