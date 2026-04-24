@@ -1,6 +1,8 @@
 package com.flightapp.flightservice.model;
 
 import com.flightapp.flightservice.enums.FlightStatus;
+import com.flightapp.flightservice.enums.MealType;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,11 +37,10 @@ public class Flight {
     @Column(nullable = false)
     private Integer businessSeats;
     @Column(nullable = false)
-    private Integer availableSeats;
-    @Column(nullable = false)
     private float ticketCost;
-    @Column(nullable = false, length = 20)
-    private String mealType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false,length=20)
+    private MealType mealType;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private FlightStatus status;

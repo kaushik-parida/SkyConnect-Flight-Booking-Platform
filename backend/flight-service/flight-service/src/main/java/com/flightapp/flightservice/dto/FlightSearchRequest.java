@@ -2,6 +2,8 @@ package com.flightapp.flightservice.dto;
 import java.time.LocalDate;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.flightapp.flightservice.enums.SortBy;
+import com.flightapp.flightservice.enums.SortDirection;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,4 +25,7 @@ public class FlightSearchRequest {
 	    @NotNull
 	    @JsonFormat(pattern="yyyy-MM-dd")
 	    private LocalDate date;
+	    private SortBy sortBy;
+	    private SortDirection sortDirection;
+	    
 	}
