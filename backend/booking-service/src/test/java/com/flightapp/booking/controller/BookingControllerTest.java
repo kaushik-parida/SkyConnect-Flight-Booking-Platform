@@ -18,8 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.flightapp.booking.dto.BookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
 import com.flightapp.booking.dto.PassengerRequest;
@@ -66,13 +66,12 @@ class BookingControllerTest {
 	@Test
 	@DisplayName("POST /booking: should return 201 Created with booking response")
 	void test_createBooking_validRequest_returns201() throws Exception {
-		when(bookingService.createBooking(any(CreateBookingRequest.class))).thenReturn(buildBookingResponse());
+		when(bookingService.createBooking(any(CreateBookingRequest.class))).thenReturn(1L);
 
 		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isCreated())
-				.andExpect(jsonPath("$.bookingId").value(1)).andExpect(jsonPath("$.bookingRef").value("FLY1234567"))
-				.andExpect(jsonPath("$.status").value("CONFIRMED")).andExpect(jsonPath("$.totalPrice").value(4500.0))
-				.andExpect(jsonPath("$.userId").value("USER-001"));
+				.content(objectMapper.writeValueAsString(buildValidRequest())))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$").value(1));
 	}
 
 	@Test
