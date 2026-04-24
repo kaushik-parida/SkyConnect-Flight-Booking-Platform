@@ -30,4 +30,4 @@ jobs:
           cache: 'maven'
 
       - name: Build and Test
-        run: mvn package -f backend/flight-service/pom.xml
+        run: mvn package -f ../backend/flight-service/pom.xml
