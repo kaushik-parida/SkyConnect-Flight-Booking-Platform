@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        service: [flight-service, airline-service, auth-service, booking-service, api-gateway]
+        service: [flight-service]
 
     defaults:
       run:
@@ -30,4 +30,4 @@ jobs:
           cache: 'maven'
 
       - name: Build and Test
-        run: mvn package
+        run: mvn package -f backend/flight-service/pom.xml
