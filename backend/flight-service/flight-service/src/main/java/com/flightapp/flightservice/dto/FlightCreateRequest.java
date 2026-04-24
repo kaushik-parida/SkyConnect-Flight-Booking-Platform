@@ -14,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
+
+import org.springframework.beans.factory.annotation.Value;
 @Getter
 @Setter
 @NoArgsConstructor
@@ -28,17 +30,13 @@ public class FlightCreateRequest {
     private Long airlineId;
     @NotBlank()
     @Size(max = 80)
-    @Pattern(regexp = "^[A-Za-z ]+$",message = "From must contain only letters")
     private String from;
     @NotBlank()
     @Size(max=80)
-    @Pattern(regexp = "^[A-Za-z ]+$",message = "To must contain only letters")
     private String to;
     @NotNull()
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime departureTime;
     @NotNull()
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime arrivalTime;
     @NotNull()
     @Min(value=0)
@@ -46,9 +44,6 @@ public class FlightCreateRequest {
     @NotNull()
     @Min(value=0,message="Value cannot be negative")
     private Integer businessSeats;
-    @NotNull()
-    @Min(value=0,message="Value cannot be negative")
-    private Integer availableSeats;
     @NotNull()
     @Min(value=0,message="Value cannot be negative")
     private Float ticketCost;

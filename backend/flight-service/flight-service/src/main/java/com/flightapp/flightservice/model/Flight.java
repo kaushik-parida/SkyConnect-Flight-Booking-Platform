@@ -37,8 +37,6 @@ public class Flight {
     @Column(nullable = false)
     private Integer businessSeats;
     @Column(nullable = false)
-    private Integer availableSeats;
-    @Column(nullable = false)
     private float ticketCost;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false,length=20)
