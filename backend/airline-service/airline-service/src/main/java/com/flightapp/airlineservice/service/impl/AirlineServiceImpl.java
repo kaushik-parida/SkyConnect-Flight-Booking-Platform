@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.flightapp.airlineservice.dto.AirlineResponse;
 import com.flightapp.airlineservice.dto.CreateAirlineRequest;
 import com.flightapp.airlineservice.entity.Airline;
+import com.flightapp.airlineservice.exception.ResourceNotFoundException;
 import com.flightapp.airlineservice.repository.AirlineRepository;
 import com.flightapp.airlineservice.service.AirlineService;
 
@@ -45,5 +46,15 @@ public class AirlineServiceImpl implements AirlineService {
 		return airlines.stream().map(a -> AirlineResponse.builder().airlineId(a.getAirlineId())
 				.airlineName(a.getAirlineName()).airlineCode(a.getAirlineCode()).isBlocked(a.isBlocked()).build())
 				.toList();
+	}
+
+	@Override
+	public AirlineResponse getAirlineById(Long id) {
+
+		Airline airline = airlineRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Airline not found with id: " + id));
+
+		return AirlineResponse.builder().airlineId(airline.getAirlineId()).airlineName(airline.getAirlineName())
+				.airlineCode(airline.getAirlineCode()).isBlocked(airline.isBlocked()).build();
 	}
 }
