@@ -1,5 +1,6 @@
 package com.flightapp.flightservice.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
@@ -24,6 +25,6 @@ public class FlightResponse {
     private LocalDateTime arrivalTime;
     private Integer economySeats;
     private Integer businessSeats;
-    private float ticketCost;
+    private BigDecimal ticketCost;
     private String status;
 }
