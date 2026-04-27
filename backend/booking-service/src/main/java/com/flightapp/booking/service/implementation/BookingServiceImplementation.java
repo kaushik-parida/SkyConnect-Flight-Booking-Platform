@@ -80,7 +80,7 @@ public class BookingServiceImplementation implements BookingService {
 		try {
 			flightServiceClient.reduceSeats(request.getFlightId(), numberOfSeats);
 
-			saved.setStatus(BookingStatus.CONFIRMED);
+			saved.setStatus(BookingStatus.PENDING);
 			saved.getPayment().setPaymentStatus(PaymentStatus.SUCCESS);
 			saved.getPayment().setPaidAt(LocalDateTime.now());
 			bookingRepository.save(saved);

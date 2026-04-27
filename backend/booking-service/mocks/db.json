@@ -9,7 +9,7 @@
       "toPlace": "Delhi",
       "departureTime": "2026-05-01T06:00:00",
       "arrivalTime": "2026-05-01T08:10:00",
-      "economySeats": 174,
+      "economySeats": 172,
       "businessSeats": 0,
       "ticketCost": 4500,
       "status": "ACTIVE"
