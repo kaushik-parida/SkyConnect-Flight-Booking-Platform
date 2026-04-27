@@ -4,8 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,10 +22,11 @@ import com.flightapp.booking.model.PaymentStatus;
 import com.flightapp.booking.repository.BookingRepository;
 import com.flightapp.booking.service.BookingService;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class BookingServiceImplementation implements BookingService {
-
-	private static final Logger log = LoggerFactory.getLogger(BookingServiceImplementation.class);
 
 	private final BookingRepository bookingRepository;
 	private final FlightServiceClient flightServiceClient;
@@ -40,7 +39,7 @@ public class BookingServiceImplementation implements BookingService {
 	@Override
 	@Transactional
 	public Long createBooking(CreateBookingRequest request) {
-		log.info("Creating booking for userId: {} flightId: {}", request.getUserId(), request.getFlightId());
+		log.info("Creating booking — userId: {} flightId: {}", request.getUserId(), request.getFlightId());
 
 		FlightResponse flight = flightServiceClient.getFlightById(request.getFlightId());
 
@@ -49,7 +48,6 @@ public class BookingServiceImplementation implements BookingService {
 		}
 
 		int numberOfSeats = request.getPassengers().size();
-
 		int availableSeats = flight.getEconomySeats() + flight.getBusinessSeats();
 
 		if (availableSeats < numberOfSeats) {
@@ -75,19 +73,17 @@ public class BookingServiceImplementation implements BookingService {
 		booking.setPayment(payment);
 
 		Booking saved = bookingRepository.save(booking);
-		log.info("Booking persisted with PENDING status: {}", saved.getBookingRef());
+		log.info("Booking persisted — ref: {} status: PENDING", saved.getBookingRef());
 
 		try {
 			flightServiceClient.reduceSeats(request.getFlightId(), numberOfSeats);
-
 			saved.setStatus(BookingStatus.CONFIRMED);
 			saved.getPayment().setPaymentStatus(PaymentStatus.SUCCESS);
 			saved.getPayment().setPaidAt(LocalDateTime.now());
 			bookingRepository.save(saved);
-			log.info("Booking confirmed: {}", saved.getBookingRef());
-
+			log.info("Booking confirmed — ref: {}", saved.getBookingRef());
 		} catch (Exception e) {
-			log.warn("Seat reduction failed — booking stays PENDING: {}", e.getMessage());
+			log.warn("Seat reduction failed — stays PENDING ref: {} reason: {}", saved.getBookingRef(), e.getMessage());
 		}
 
 		return saved.getBookingId();
