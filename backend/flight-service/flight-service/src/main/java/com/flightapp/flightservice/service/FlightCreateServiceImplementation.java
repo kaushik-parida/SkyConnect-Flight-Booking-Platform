@@ -14,13 +14,13 @@ public class FlightCreateServiceImplementation implements FlightCreateService{
     private final FlightRepository flightRepository;
     @Value("${flight.place.regex}")
     private String placeRegex;
-    @Value("${flight.datetime.pattern}")
-    private String dateTimePattern;
+    @Value("${flight.place.message}")
+    private String placeMessage;
     @Override
     public Long createFlight(FlightCreateRequest request){
         validateCreateRequest(request);
         if(flightRepository.existsByFlightNumberIgnoreCase(request.getFlightNumber().trim())) {
-            throw new IllegalArgumentException("flight already exists");
+            throw new IllegalArgumentException("flight number already exists");
         }
         Flight flight =Flight.builder()
                 .flightNumber(request.getFlightNumber().trim())
@@ -39,18 +39,22 @@ public class FlightCreateServiceImplementation implements FlightCreateService{
         return savedFlight.getFlightId();
     }
     private void validateCreateRequest(FlightCreateRequest request){
-    	 if (!request.getFrom().trim().matches(placeRegex)){
-             throw new IllegalArgumentException("From must contain only letters");
-         }
+        validatePlace(request.getFrom()); 
+        validatePlace(request.getTo());
         if (request.getFrom().trim().equalsIgnoreCase(request.getTo().trim())) {
-            throw new IllegalArgumentException("from and to cannot be identical");
+            throw new IllegalArgumentException("Source and destination cannot be the same");
         }
         if (!request.getArrivalTime().isAfter(request.getDepartureTime())) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Arrival time must be after departure time");
         }
         int totalSeats=request.getEconomySeats()+request.getBusinessSeats();
         if (totalSeats<= 0){
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("At least one seat class must have seats");
+        }
+    }
+    private void validatePlace(String place) {
+        if (!place.trim().matches(placeRegex)) {
+            throw new IllegalArgumentException(placeMessage);
         }
     }
 }
