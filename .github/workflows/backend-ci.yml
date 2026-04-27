@@ -56,6 +56,7 @@ jobs:
           mvn sonar:sonar -B \
            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
            -Dsonar.projectKey=skyconnect-booking-service \
            -Dsonar.projectName="SkyConnect Booking Service" 
