@@ -16,7 +16,6 @@ function LoginPage() {
     navigate("/user");
   }
 };
-
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -27,18 +26,15 @@ function LoginPage() {
           placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
         />
-
         <input
           style={styles.input}
           type="password"
           placeholder="Password"
           onChange={(e) => setPassword(e.target.value)}
         />
-
         <button style={styles.button} onClick={handleLogin}>
           Login
         </button>
-
         <p>
           Don't have an account?{" "}
           <span style={styles.link} onClick={() => navigate("/signup")}>
@@ -49,7 +45,6 @@ function LoginPage() {
     </div>
   );
 }
-
 const styles = {
   container: {
     height: "100vh",
@@ -82,5 +77,4 @@ const styles = {
     cursor: "pointer",
   }
 };
-
 export default LoginPage;

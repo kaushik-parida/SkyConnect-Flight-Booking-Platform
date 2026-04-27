@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
-
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn");
     setIsLoggedIn(loggedIn === "true");
   }, []);
-
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
     navigate("/");
   };
-
   return (
     <div style={styles.nav}>
-      <h2 style={{ color: "white" }}>SkyScanner</h2>
-
+      <h2 style={{ color: "white" }}>Enjoy Trip</h2>
       <div>
         {!isLoggedIn ? (
           <button style={styles.btn} onClick={() => navigate("/")}>
@@ -34,7 +29,6 @@ const Navbar = () => {
     </div>
   );
 };
-
 const styles = {
   nav: {
     display: "flex",
