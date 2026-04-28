@@ -14,7 +14,7 @@ import lombok.Data;
 public class BookingResponse {
 
 	private Long bookingId;
-	private String bookingRef;
+	private String bookingReference;
 	private Long flightId;
 	private String userId;
 	private Integer numberOfSeats;

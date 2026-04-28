@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -153,5 +154,93 @@ public class FlightServiceClientTest {
 				.thenReturn(Mono.error(new RuntimeException("Connection refused")));
 
 		assertThrows(FlightServiceUnavailableException.class, () -> flightServiceClient.reduceSeats(1L, 2));
+	}
+
+	@Test
+	@DisplayName("restoreSeats: should restore seats successfully")
+	void test_restoreSeats_success() {
+		FlightResponse current = buildFlightResponse();
+
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.just(current));
+
+		when(webClient.patch()).thenReturn(requestBodyUriSpec);
+		when(requestBodyUriSpec.uri(anyString(), anyLong())).thenReturn(requestBodySpec);
+		when(requestBodySpec.bodyValue(any())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+
+		assertDoesNotThrow(() -> flightServiceClient.restoreSeats(1L, 2));
+	}
+
+	@Test
+	@DisplayName("restoreSeats: should throw FlightNotFoundException when response is null")
+	void test_restoreSeats_nullResponse_throwsFlightNotFoundException() {
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		// Returns null — simulates empty body from Flight Service
+		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.empty());
+
+		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
+				() -> flightServiceClient.restoreSeats(1L, 2));
+
+		assertTrue(ex.getMessage().contains("1"));
+	}
+
+	@Test
+	@DisplayName("restoreSeats: should throw FlightNotFoundException on 404")
+	void test_restoreSeats_404_throwsFlightNotFoundException() {
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class))
+				.thenReturn(Mono.error(WebClientResponseException.NotFound.create(404, "Not Found", null, null, null)));
+
+		assertThrows(FlightNotFoundException.class, () -> flightServiceClient.restoreSeats(999L, 2));
+	}
+
+	@Test
+	@DisplayName("restoreSeats: should throw FlightServiceUnavailableException when service is down")
+	void test_restoreSeats_serviceDown_throwsUnavailableException() {
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class))
+				.thenReturn(Mono.error(new RuntimeException("Connection refused")));
+
+		assertThrows(FlightServiceUnavailableException.class, () -> flightServiceClient.restoreSeats(1L, 2));
+	}
+
+	@Test
+	@DisplayName("reduceSeats: should throw FlightNotFoundException when response is null")
+	void test_reduceSeats_nullResponse_throwsFlightNotFoundException() {
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.empty());
+
+		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
+				() -> flightServiceClient.reduceSeats(1L, 2));
+
+		assertTrue(ex.getMessage().contains("1"));
+	}
+
+	@Test
+	@DisplayName("reduceSeats: should rethrow FlightNotFoundException directly without wrapping")
+	void test_reduceSeats_flightNotFoundRethrown() {
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class))
+				.thenReturn(Mono.error(WebClientResponseException.NotFound.create(404, "Not Found", null, null, null)));
+
+		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
+				() -> flightServiceClient.reduceSeats(999L, 2));
+
+		assertTrue(ex.getMessage().contains("Flight not found"));
+		assertFalse(ex.getMessage().contains("unavailable"));
 	}
 }
