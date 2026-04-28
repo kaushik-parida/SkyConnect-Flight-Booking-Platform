@@ -1,7 +1,12 @@
 package com.flightapp.flightservice.airline.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.flightapp.flightservice.airline.dto.AirlineRequest;
 import com.flightapp.flightservice.airline.service.AirlineService;
@@ -24,12 +29,10 @@ public class AirlineController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<String> block(
-	        @PathVariable Long id,
-	        @RequestBody String status) {
+	public ResponseEntity<String> block(@PathVariable Long id, @RequestBody String status) {
 
-	    airlineService.blockAirline(id, status);
-	    return ResponseEntity.ok("Airline status updated");
+		airlineService.blockAirline(id, status);
+		return ResponseEntity.ok("Airline status updated");
 	}
 
 }
