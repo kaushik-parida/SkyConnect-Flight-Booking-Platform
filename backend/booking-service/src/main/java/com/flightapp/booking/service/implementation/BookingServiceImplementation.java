@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -187,7 +186,7 @@ public class BookingServiceImplementation implements BookingService {
 				.map(p -> PassengerResponse.builder().passengerId(p.getPassengerId()).firstName(p.getFirstName())
 						.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).dateOfBirth(p.getDateOfBirth())
 						.mealPreference(p.getMealPreference().name()).build())
-				.collect(Collectors.toList());
+				.toList();
 
 		return BookingResponse.builder().bookingId(booking.getBookingId()).bookingReference(booking.getBookingReference())
 				.flightId(booking.getFlightId()).userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())

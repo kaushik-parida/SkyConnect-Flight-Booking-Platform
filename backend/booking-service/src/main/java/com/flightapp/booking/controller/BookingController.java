@@ -41,19 +41,19 @@ public class BookingController {
 
 	@PostMapping
 	@Operation(summary = "Create a new booking", description = "Creates a booking after validating flight availability and seat count")
-	@ApiResponses({ @ApiResponse(responseCode = "201", description = "Booking created successfully"),
-			@ApiResponse(responseCode = "400", description = "Validation error or flight not active"),
-			@ApiResponse(responseCode = "404", description = "Flight not found"),
-			@ApiResponse(responseCode = "409", description = "Insufficient seats or duplicate booking"),
-			@ApiResponse(responseCode = "503", description = "Flight service unavailable"), })
+	@ApiResponse(responseCode = "201", description = "Booking created successfully")
+			@ApiResponse(responseCode = "400", description = "Validation error or flight not active")
+			@ApiResponse(responseCode = "404", description = "Flight not found")
+			@ApiResponse(responseCode = "409", description = "Insufficient seats or duplicate booking")
+			@ApiResponse(responseCode = "503", description = "Flight service unavailable")
 	public ResponseEntity<Long> createBooking(@Valid @RequestBody CreateBookingRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createBooking(request));
 	}
 
 	@GetMapping("/{bookingId}")
 	@Operation(summary = "Get booking by ID", description = "Returns full booking details including passengers")
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Booking found"),
-			@ApiResponse(responseCode = "404", description = "Booking not found"), })
+	@ApiResponse(responseCode = "200", description = "Booking found")
+			@ApiResponse(responseCode = "404", description = "Booking not found")
 	public ResponseEntity<BookingResponse> getBookingById(
 			@Parameter(description = "Booking ID") @PathVariable Long bookingId) {
 		return ResponseEntity.ok(bookingService.getBookingById(bookingId));
@@ -61,7 +61,7 @@ public class BookingController {
 
 	@GetMapping("/user/{userId}")
 	@Operation(summary = "Get all bookings for a user", description = "Returns paginated list of bookings for the given user ID")
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Bookings retrieved successfully"), })
+	@ApiResponse(responseCode = "200", description = "Bookings retrieved successfully")
 	public ResponseEntity<PagedResponse<BookingResponse>> getBookingsByUserId(
 			@Parameter(description = "User ID") @PathVariable String userId,
 			@Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -92,10 +92,10 @@ public class BookingController {
 
 	@PatchMapping("/{bookingId}/cancel")
 	@Operation(summary = "Cancel a booking", description = "Cancels a confirmed or pending booking and initiates refund")
-	@ApiResponses({ @ApiResponse(responseCode = "200", description = "Booking cancelled successfully"),
-			@ApiResponse(responseCode = "400", description = "Booking already cancelled"),
-			@ApiResponse(responseCode = "403", description = "Not authorized to cancel this booking"),
-			@ApiResponse(responseCode = "404", description = "Booking not found"), })
+	@ApiResponse(responseCode = "200", description = "Booking cancelled successfully")
+			@ApiResponse(responseCode = "400", description = "Booking already cancelled")
+			@ApiResponse(responseCode = "403", description = "Not authorized to cancel this booking")
+			@ApiResponse(responseCode = "404", description = "Booking not found")
 	public ResponseEntity<CancelBookingResponse> cancelBooking(
 			@Parameter(description = "Booking ID") @PathVariable Long bookingId,
 			@Parameter(description = "User ID") @RequestParam String userId) {

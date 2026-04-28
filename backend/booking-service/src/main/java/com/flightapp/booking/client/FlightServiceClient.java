@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class FlightServiceClient {
 
+	private static final String FLIGHT_BY_ID_URI = "/flights/{id}";
 	private final WebClient webClient;
 
 	public FlightServiceClient(WebClient webClient) {
@@ -24,9 +25,9 @@ public class FlightServiceClient {
 	}
 
 	public FlightResponse getFlightById(Long flightId) {
-		log.debug("Calling Flight Service: GET /flights/{}", flightId);
+		log.debug("Calling Flight Service: GET {}", FLIGHT_BY_ID_URI.replace("{id}", flightId.toString()));
 		try {
-			return webClient.get().uri("/flights/{id}", flightId).retrieve().bodyToMono(FlightResponse.class).block();
+			return webClient.get().uri(FLIGHT_BY_ID_URI, flightId).retrieve().bodyToMono(FlightResponse.class).block();
 		} catch (WebClientResponseException.NotFound e) {
 			log.error("Flight not found with id: {}", flightId);
 			throw new FlightNotFoundException("Flight not found with id: " + flightId);
@@ -37,9 +38,9 @@ public class FlightServiceClient {
 	}
 
 	public void reduceSeats(Long flightId, int seatsToReduce) {
-		log.debug("Calling Flight Service: GET /flights/{} to read current seats", flightId);
+		log.debug("Calling Flight Service: GET {} to read current seats", FLIGHT_BY_ID_URI.replace("{id}", flightId.toString()));
 		try {
-			FlightResponse current = webClient.get().uri("/flights/{id}", flightId).retrieve()
+			FlightResponse current = webClient.get().uri(FLIGHT_BY_ID_URI, flightId).retrieve()
 					.bodyToMono(FlightResponse.class).block();
 
 			if (current == null) {
@@ -62,7 +63,7 @@ public class FlightServiceClient {
 			body.put("economySeats", updatedEconomySeats);
 			body.put("businessSeats", updatedBusinessSeats);
 
-			webClient.patch().uri("/flights/{id}", flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
+			webClient.patch().uri(FLIGHT_BY_ID_URI, flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
 
 			log.debug("Seats reduced for flight: {} new available: {}", flightId);
 
@@ -80,7 +81,7 @@ public class FlightServiceClient {
 	public void restoreSeats(Long flightId, int seatsToRestore) {
 		log.debug("Calling Flight Service: restore {} seats for flight {}", seatsToRestore, flightId);
 		try {
-			FlightResponse current = webClient.get().uri("/flights/{id}", flightId).retrieve()
+			FlightResponse current = webClient.get().uri(FLIGHT_BY_ID_URI, flightId).retrieve()
 					.bodyToMono(FlightResponse.class).block();
 
 			if (current == null) {
@@ -93,7 +94,7 @@ public class FlightServiceClient {
 			body.put("economySeats", restoredEconomy);
 			body.put("businessSeats", current.getBusinessSeats());
 
-			webClient.patch().uri("/flights/{id}", flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
+			webClient.patch().uri(FLIGHT_BY_ID_URI, flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
 
 			log.debug("Seats restored for flight: {} restored: {}", flightId, seatsToRestore);
 
