@@ -1,20 +1,30 @@
-const flightService = require("../services/flightService");
+const axios = require("axios");
 
-exports.searchFlights = async (request, response) => {
+exports.searchFlights = async (req, res) => {
     try {
-        const searchData = request.body;
+        const searchData = req.body;
 
-        console.log("Searching flights");
+        console.log("Gateway: Forwarding request to Flight Service");
 
-        const data = await flightService.searchFlights(searchData);
+        const response = await axios.post(
+            "http://localhost:8082/api/v1.0/flight/search", // change if needed
+            searchData,
+            {
+                headers: {
+                    "x-user-id": req.user.id,
+                    "x-user-email": req.user.email,
+                    "x-user-role": req.user.role
+                }
+            }
+        );
 
-        response.json(data);
+        res.json(response.data);
 
     } catch (error) {
-        console.error("Error searching flights:", error.message);
+        console.error("Error calling Flight Service:", error.message);
 
-        response.status(500).json({
-            message: "Flight search failed"
+        res.status(500).json({
+            message: "Flight service error"
         });
     }
 };
