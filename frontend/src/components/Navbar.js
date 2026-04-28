@@ -1,38 +1,44 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-const Navbar = () => {
+
+function Navbar() {
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const role = localStorage.getItem("role");
-  const handleLogout = () =>{
+
+  useEffect(() => {
+    setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
+  }, []);
+
+  const logout = () => {
     localStorage.clear();
+    setIsLoggedIn(false);
     navigate("/");
   };
+
   return (
     <div style={styles.nav}>
-      <h2 style={{ color: "white",cursor:"pointer"}} onClick={()=> navigate("/")}>Enjoy Trip</h2>
+      <h2 style={{ color: "white" }}>Enjoy Trip</h2>
+
       <div>
-        {isLoggedIn && role === "ADMIN" && (
-          <button style={styles.btn} onClick={()=> navigate("/admin")}>Admin</button>
-        )}
         {!isLoggedIn ? (
-      <>
-     <button style={styles.btn} onClick={() => navigate("/login")}>
-      Login
-    </button>
-    <button style={styles.btn} onClick={() => navigate("/signup")}>
-      Signup
-    </button>
-  </>
-) : (
-  <button style={styles.btn} onClick={handleLogout}>
-    Logout
-  </button>
-)}
+          <>
+            <button onClick={() => navigate("/login")}>Login</button>
+            <button onClick={() => navigate("/signup")}>Signup</button>
+          </>
+        ) : (
+          <>
+            {role === "ADMIN" && (
+              <button onClick={() => navigate("/admin")}>Admin</button>
+            )}
+            <button onClick={logout}>Logout</button>
+          </>
+        )}
       </div>
     </div>
   );
-};
+}
+
 const styles = {
   nav: {
     display: "flex",
@@ -40,12 +46,6 @@ const styles = {
     padding: "15px",
     background: "#0b2c4a",
   },
-  btn: {
-    padding: "8px 15px",
-    background: "white",
-    borderRadius: "5px",
-    cursor: "pointer",
-    marginLeft:"10px",
-  },
 };
+
 export default Navbar;
