@@ -44,6 +44,24 @@ public class GlobalExceptionHandler {
             FlightServiceUnavailableException ex, HttpServletRequest request) {
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request.getRequestURI());
     }
+    
+    @ExceptionHandler(DuplicateBookingException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateBooking(
+            DuplicateBookingException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage(), req.getRequestURI());
+    }
+    
+    @ExceptionHandler(BookingAlreadyCancelledException.class)
+    public ResponseEntity<ErrorResponse> handleAlreadyCancelled(
+            BookingAlreadyCancelledException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), req.getRequestURI());
+    }
+    
+    @ExceptionHandler(UnauthorizedBookingAccessException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedBookingAccessException ex, HttpServletRequest req) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), req.getRequestURI());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(

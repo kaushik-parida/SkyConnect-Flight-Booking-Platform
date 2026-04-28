@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.when;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,16 +27,28 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import com.flightapp.booking.client.FlightServiceClient;
+import com.flightapp.booking.dto.BookingResponse;
+import com.flightapp.booking.dto.CancelBookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
 import com.flightapp.booking.dto.PassengerRequest;
 import com.flightapp.booking.dto.external.FlightResponse;
+import com.flightapp.booking.exception.BookingAlreadyCancelledException;
+import com.flightapp.booking.exception.BookingNotFoundException;
+import com.flightapp.booking.exception.DuplicateBookingException;
 import com.flightapp.booking.exception.FlightNotActiveException;
 import com.flightapp.booking.exception.FlightServiceUnavailableException;
 import com.flightapp.booking.exception.InsufficientSeatsException;
+import com.flightapp.booking.exception.UnauthorizedBookingAccessException;
 import com.flightapp.booking.model.Booking;
 import com.flightapp.booking.model.BookingStatus;
+import com.flightapp.booking.model.Payment;
+import com.flightapp.booking.model.PaymentStatus;
 import com.flightapp.booking.repository.BookingRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,8 +94,9 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingRef("FLY1234567").userId("USER-001").flightId(1L)
-				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED).build();
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
+				.flightId(1L).numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED)
+				.build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
@@ -107,7 +122,7 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(99L).bookingRef("FLY1234567").numberOfSeats(2)
+		Booking savedBooking = Booking.builder().bookingId(99L).bookingReference("FLY1234567").numberOfSeats(2)
 				.totalPrice(BigDecimal.valueOf(9000.0)).status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
@@ -191,8 +206,8 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doThrow(new RuntimeException("Service Unavailable")).when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingRef("FLY1234567").status(BookingStatus.PENDING)
-				.build();
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
+				.status(BookingStatus.PENDING).build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
@@ -210,8 +225,8 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingRef("FLY1234567").status(BookingStatus.CONFIRMED)
-				.build();
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
+				.status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
@@ -237,8 +252,8 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingRef("FLY1234567").status(BookingStatus.CONFIRMED)
-				.build();
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
+				.status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
@@ -262,11 +277,164 @@ public class BookingServiceImplementationTest {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
 		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
 
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingRef("FLY1234567").status(BookingStatus.CONFIRMED)
-				.build();
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
+				.status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
 		assertDoesNotThrow(() -> bookingService.createBooking(validRequest));
+	}
+
+	@Test
+	@DisplayName("createBooking: should handle invalid meal preference gracefully")
+	void test_createBooking_invalidMealPreference_defaultsToNone() {
+		validRequest.getPassengers().get(0).setMealPreference("INVALID_VALUE");
+
+		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
+
+		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
+				.status(BookingStatus.CONFIRMED).build();
+
+		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+
+		assertDoesNotThrow(() -> bookingService.createBooking(validRequest));
+	}
+
+	@Test
+	@DisplayName("getBookingById: should return booking when found")
+	void test_getBookingById_found_returnsBooking() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED).build();
+
+		when(bookingRepository.findByIdWithPassengers(1L)).thenReturn(Optional.of(booking));
+
+		BookingResponse response = bookingService.getBookingById(1L);
+
+		assertNotNull(response);
+		assertEquals(1L, response.getBookingId());
+		assertEquals("FLY1234567", response.getBookingReference());
+		assertEquals(BookingStatus.CONFIRMED, response.getStatus());
+		verify(bookingRepository, times(1)).findByIdWithPassengers(1L);
+	}
+
+	@Test
+	@DisplayName("getBookingById: should throw BookingNotFoundException when not found")
+	void test_getBookingById_notFound_throwsException() {
+		when(bookingRepository.findByIdWithPassengers(99L)).thenReturn(Optional.empty());
+
+		BookingNotFoundException ex = assertThrows(BookingNotFoundException.class,
+				() -> bookingService.getBookingById(99L));
+
+		assertEquals("Booking not found with id: 99", ex.getMessage());
+	}
+
+	@Test
+	@DisplayName("getBookingsByUserId: should return paginated bookings for user")
+	void test_getBookingsByUserId_returnsPagedResults() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED).build();
+
+		Page<Booking> page = new PageImpl<>(List.of(booking));
+		Pageable pageable = PageRequest.of(0, 10);
+
+		when(bookingRepository.findByUserIdOrderByBookingTimeDesc("USER-001", pageable)).thenReturn(page);
+
+		Page<BookingResponse> result = bookingService.getBookingsByUserId("USER-001", pageable);
+
+		assertNotNull(result);
+		assertEquals(1, result.getTotalElements());
+		assertEquals("USER-001", result.getContent().get(0).getUserId());
+	}
+
+	@Test
+	@DisplayName("getBookingsByUserId: should return empty page when user has no bookings")
+	void test_getBookingsByUserId_noBookings_returnsEmptyPage() {
+		Pageable pageable = PageRequest.of(0, 10);
+		when(bookingRepository.findByUserIdOrderByBookingTimeDesc("USER-999", pageable)).thenReturn(Page.empty());
+
+		Page<BookingResponse> result = bookingService.getBookingsByUserId("USER-999", pageable);
+
+		assertTrue(result.isEmpty());
+	}
+
+	@Test
+	@DisplayName("cancelBooking: should cancel confirmed booking successfully")
+	void test_cancelBooking_confirmed_cancelsSuccessfully() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED).build();
+
+		Payment payment = Payment.builder().paymentStatus(PaymentStatus.SUCCESS).build();
+		booking.setPayment(payment);
+
+		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt());
+
+		CancelBookingResponse response = bookingService.cancelBooking(1L, "USER-001");
+
+		assertEquals(BookingStatus.CANCELLED, response.getStatus());
+		assertEquals("FLY1234567", response.getBookingReference());
+		assertNotNull(response.getCancelledAt());
+		verify(flightServiceClient, times(1)).restoreSeats(1L, 1);
+	}
+
+	@Test
+	@DisplayName("cancelBooking: should throw BookingNotFoundException when booking not found")
+	void test_cancelBooking_notFound_throwsException() {
+		when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+		assertThrows(BookingNotFoundException.class, () -> bookingService.cancelBooking(99L, "USER-001"));
+	}
+
+	@Test
+	@DisplayName("cancelBooking: should throw UnauthorizedBookingAccessException when user does not own booking")
+	void test_cancelBooking_wrongUser_throwsUnauthorized() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
+				.status(BookingStatus.CONFIRMED).build();
+
+		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+		assertThrows(UnauthorizedBookingAccessException.class, () -> bookingService.cancelBooking(1L, "USER-999"));
+	}
+
+	@Test
+	@DisplayName("cancelBooking: should throw BookingAlreadyCancelledException when already cancelled")
+	void test_cancelBooking_alreadyCancelled_throwsException() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
+				.status(BookingStatus.CANCELLED).build();
+
+		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+		assertThrows(BookingAlreadyCancelledException.class, () -> bookingService.cancelBooking(1L, "USER-001"));
+	}
+
+	@Test
+	@DisplayName("cancelBooking: should still cancel when restorSats fails")
+	void test_cancelBooking_restoreSeatsFailure_stillCancels() {
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.numberOfSeats(1).status(BookingStatus.CONFIRMED).build();
+
+		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		doThrow(new FlightServiceUnavailableException("unavailable")).when(flightServiceClient).restoreSeats(anyLong(),
+				anyInt());
+
+		CancelBookingResponse response = bookingService.cancelBooking(1L, "USER-001");
+
+		assertEquals(BookingStatus.CANCELLED, response.getStatus());
+
+	}
+
+	@Test
+	@DisplayName("createBooking: should throw DuplicateBookingException when booking already exists")
+	void test_createBooking_duplicate_throwsException() {
+		when(bookingRepository.existsByUserIdAndFlightIdAndStatusNot("USER-001", 1L, BookingStatus.CANCELLED))
+				.thenReturn(true);
+
+		assertThrows(DuplicateBookingException.class, () -> bookingService.createBooking(validRequest));
+
+		verify(flightServiceClient, never()).getFlightById(anyLong());
+		verify(bookingRepository, never()).save(any());
 	}
 }

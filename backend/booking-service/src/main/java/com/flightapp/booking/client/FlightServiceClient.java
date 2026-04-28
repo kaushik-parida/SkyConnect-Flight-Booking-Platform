@@ -76,4 +76,34 @@ public class FlightServiceClient {
 			throw new FlightServiceUnavailableException("Flight Service is currently unavailable");
 		}
 	}
+
+	public void restoreSeats(Long flightId, int seatsToRestore) {
+		log.debug("Calling Flight Service: restore {} seats for flight {}", seatsToRestore, flightId);
+		try {
+			FlightResponse current = webClient.get().uri("/flights/{id}", flightId).retrieve()
+					.bodyToMono(FlightResponse.class).block();
+
+			if (current == null) {
+				throw new FlightNotFoundException("Flight not found with id: " + flightId);
+			}
+
+			int restoredEconomy = current.getEconomySeats() + seatsToRestore;
+
+			Map<String, Object> body = new HashMap<>();
+			body.put("economySeats", restoredEconomy);
+			body.put("businessSeats", current.getBusinessSeats());
+
+			webClient.patch().uri("/flights/{id}", flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
+
+			log.debug("Seats restored for flight: {} restored: {}", flightId, seatsToRestore);
+
+		} catch (FlightNotFoundException e) {
+			throw e;
+		} catch (WebClientResponseException.NotFound e) {
+			throw new FlightNotFoundException("Flight not found with id: " + flightId);
+		} catch (Exception e) {
+			log.error("Failed to restore seats for flight: {} reason: {}", flightId, e.getMessage());
+			throw new FlightServiceUnavailableException("Flight Service is currently unavailable");
+		}
+	}
 }

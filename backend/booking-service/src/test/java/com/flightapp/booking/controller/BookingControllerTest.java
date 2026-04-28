@@ -1,7 +1,10 @@
 package com.flightapp.booking.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -14,6 +17,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,11 +27,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.flightapp.booking.dto.BookingResponse;
+import com.flightapp.booking.dto.CancelBookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
 import com.flightapp.booking.dto.PassengerRequest;
+import com.flightapp.booking.exception.BookingAlreadyCancelledException;
+import com.flightapp.booking.exception.BookingNotFoundException;
 import com.flightapp.booking.exception.FlightNotActiveException;
 import com.flightapp.booking.exception.FlightServiceUnavailableException;
 import com.flightapp.booking.exception.InsufficientSeatsException;
+import com.flightapp.booking.exception.UnauthorizedBookingAccessException;
 import com.flightapp.booking.model.BookingStatus;
 import com.flightapp.booking.service.BookingService;
 
@@ -56,7 +66,7 @@ public class BookingControllerTest {
 	}
 
 	private BookingResponse buildBookingResponse() {
-		return BookingResponse.builder().bookingId(1L).bookingRef("FLY1234567").flightId(1L).userId("USER-001")
+		return BookingResponse.builder().bookingId(1L).bookingReference("FLY1234567").flightId(1L).userId("USER-001")
 				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED)
 				.bookingTime(LocalDateTime.now()).passengers(List.of()).build();
 	}
@@ -67,8 +77,7 @@ public class BookingControllerTest {
 		when(bookingService.createBooking(any(CreateBookingRequest.class))).thenReturn(1L);
 
 		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(buildValidRequest())))
-				.andExpect(status().isCreated())
+				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isCreated())
 				.andExpect(jsonPath("$").value(1));
 	}
 
@@ -130,5 +139,75 @@ public class BookingControllerTest {
 				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.status").value(400))
 				.andExpect(jsonPath("$.message").value("Flight 1 is not active"));
+	}
+
+	@Test
+	@DisplayName("GET /booking/{id}: should return 200 with booking")
+	void test_getBookingById_found_returns200() throws Exception {
+		BookingResponse response = buildBookingResponse();
+		when(bookingService.getBookingById(1L)).thenReturn(response);
+
+		mockMvc.perform(get("/api/v1.0/flight/booking/1")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.bookingId").value(1)).andExpect(jsonPath("$.bookingReference").value("FLY1234567"))
+				.andExpect(jsonPath("$.status").value("CONFIRMED"));
+	}
+
+	@Test
+	@DisplayName("GET /booking/{id}: should return 404 when not found")
+	void test_getBookingById_notFound_returns404() throws Exception {
+		when(bookingService.getBookingById(99L))
+				.thenThrow(new BookingNotFoundException("Booking not found with id: 99"));
+
+		mockMvc.perform(get("/api/v1.0/flight/booking/99")).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.status").value(404))
+				.andExpect(jsonPath("$.message").value("Booking not found with id: 99"));
+	}
+
+	@Test
+	@DisplayName("GET /booking/user/{userId}: should return 200 with paged bookings")
+	void test_getBookingsByUserId_returns200() throws Exception {
+		BookingResponse booking = buildBookingResponse();
+		Page<BookingResponse> page = new PageImpl<>(List.of(booking));
+
+		when(bookingService.getBookingsByUserId(eq("USER-001"), any(Pageable.class))).thenReturn(page);
+
+		mockMvc.perform(get("/api/v1.0/flight/booking/user/USER-001")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElements").value(1))
+				.andExpect(jsonPath("$.content[0].userId").value("USER-001"));
+	}
+
+	@Test
+	@DisplayName("PATCH /booking/{id}/cancel: should return 200 on successful cancellation")
+	void test_cancelBooking_returns200() throws Exception {
+		CancelBookingResponse cancelResponse = CancelBookingResponse.builder().bookingId(1L)
+				.bookingReference("FLY1234567").status(BookingStatus.CANCELLED)
+				.message("Booking cancelled successfully. Refund will be processed in 5-7 business days.")
+				.cancelledAt(LocalDateTime.now()).build();
+
+		when(bookingService.cancelBooking(1L, "USER-001")).thenReturn(cancelResponse);
+
+		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-001"))
+				.andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"))
+				.andExpect(jsonPath("$.bookingReference").value("FLY1234567"));
+	}
+
+	@Test
+	@DisplayName("PATCH /booking/{id}/cancel: should return 403 when unauthorized")
+	void test_cancelBooking_unauthorized_returns403() throws Exception {
+		when(bookingService.cancelBooking(1L, "USER-999"))
+				.thenThrow(new UnauthorizedBookingAccessException("You are not authorized to cancel this booking"));
+
+		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-999"))
+				.andExpect(status().isForbidden()).andExpect(jsonPath("$.status").value(403));
+	}
+
+	@Test
+	@DisplayName("PATCH /booking/{id}/cancel: should return 400 when already cancelled")
+	void test_cancelBooking_alreadyCancelled_returns400() throws Exception {
+		when(bookingService.cancelBooking(1L, "USER-001"))
+				.thenThrow(new BookingAlreadyCancelledException("Booking FLY1234567 is already cancelled"));
+
+		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-001"))
+				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400));
 	}
 }

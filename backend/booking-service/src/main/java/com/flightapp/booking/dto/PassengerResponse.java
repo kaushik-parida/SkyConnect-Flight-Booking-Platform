@@ -14,6 +14,5 @@ public class PassengerResponse {
 	private String lastName;
 	private String passportNumber;
 	private LocalDate dateOfBirth;
-	private String seatNumber;
 	private String mealPreference;
 }
