@@ -24,8 +24,9 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/register")
-	public ResponseEntity<CommonResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request) {
-		return ResponseEntity.ok(authService.register(request));
+	public ResponseEntity<Long> register(@Valid @RequestBody SignupRequest request) {
+		SignupResponse response = authService.register(request).getData();
+		return ResponseEntity.ok(response.getUserId());
 	}
 
 	@PostMapping("/login")
