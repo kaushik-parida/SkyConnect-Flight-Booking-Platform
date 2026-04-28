@@ -30,7 +30,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "bookings", indexes = { @Index(name = "idx_user_id", columnList = "user_id"),
 		@Index(name = "idx_flight_id", columnList = "flight_id"), @Index(name = "idx_status", columnList = "status"),
-		@Index(name = "idx_booking_ref", columnList = "booking_ref") })
+		@Index(name = "idx_booking_reference", columnList = "booking_reference") })
 
 @Getter
 @Setter
@@ -44,8 +44,8 @@ public class Booking {
 	@Column(name = "booking_id")
 	private Long bookingId;
 
-	@Column(name = "booking_ref", nullable = false, unique = true, length = 10)
-	private String bookingRef;
+	@Column(name = "booking_reference", nullable = false, unique = true, length = 10)
+	private String bookingReference;
 
 	@Column(name = "user_id", nullable = false, length = 36)
 	private String userId;
