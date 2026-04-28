@@ -7,13 +7,17 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
+    if(!email || !password){
+      alert("Enter email and password");
+      return;
+    }
   const role = email === "admin@gmail.com" ? "ADMIN" : "USER";
   localStorage.setItem("isLoggedIn", "true");
   localStorage.setItem("role", role);
   if (role === "ADMIN") {
     navigate("/admin");
   } else {
-    navigate("/user");
+    navigate("/");
   }
 };
   return (

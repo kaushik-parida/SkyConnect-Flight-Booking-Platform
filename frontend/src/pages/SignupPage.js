@@ -7,7 +7,7 @@ function SignupPage() {
   const handleSignup = () => {
     console.log("Signup:", email, password);
     alert("User registered successfully!");
-    navigate("/");
+    navigate("/login");
   };
   return (
     <div style={styles.container}>
@@ -16,8 +16,7 @@ function SignupPage() {
         <input
           style={styles.input}
           placeholder="Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
+          onChange={(e) => setEmail(e.target.value)}/>
         <input
           style={styles.input}
           type="password"
@@ -29,7 +28,7 @@ function SignupPage() {
         </button>
         <p>
           Already have an account?{" "}
-          <span style={styles.link} onClick={() => navigate("/")}>
+          <span style={styles.link} onClick={() => navigate("/login")}>
             Login
           </span>
         </p>

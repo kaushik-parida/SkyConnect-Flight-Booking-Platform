@@ -6,27 +6,40 @@ const FlightSearch = () =>{
   const [form,setForm] = useState({
     from : "",
     to : "",
-    daeprtureDate : "",
+    departureDate : "",
     returnDate:"",
     seatType : "ECONOMY",
   });
   const handleChange = (e) =>{
     setForm({...form,[e.target.name]:e.target.value});
   };
-  const handleSearch =()=>{
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    if(!isLoggedIn){
-      alert("please login to search flights");
-      navigate("/login");
-      return;
-    }
-    if (!form.from || !form.to || !form.departureDate) {
-      alert("Please fill all required fields");
-      return;
-    }
-    console.log("search data:",form);
-    alert("Searching flights..");
-  };
+  const handleSearch = () => {
+  const isLoggedIn = localStorage.getItem("isLoggedIn");
+  if (!isLoggedIn) {
+    alert("Please login to continue with your booking");
+    navigate("/login");
+    return;
+  }
+  if (!form.from || !form.to || !form.departureDate) {
+    alert("Please fill all required fields");
+    return;
+  }
+  if (form.from === form.to) {
+    alert("From and To cannot be same");
+    return;
+  }
+  if (form.departureDate < today) {
+  alert("Departure date cannot be in the past");
+  return;
+  }
+ if (form.returnDate && form.returnDate < form.departureDate) {
+  alert("Return date cannot be before departure date");
+  return;
+ }
+  console.log("Search Data:", form);
+  alert("Searching flights...");
+};
+const today = new Date().toISOString().split("T")[0]; 
   return(
     <div style={styles.container}>
       <h2 style={{color:"white",marginBottom:"20px"}}>search flights</h2>
@@ -48,6 +61,7 @@ const FlightSearch = () =>{
         <input
           type="date"
           name="departureDate"
+          min={today}
           onChange={handleChange}
           style={styles.input}/>
           </div>
@@ -56,6 +70,7 @@ const FlightSearch = () =>{
         <input
           type="date"
           name="returnDate"
+          min={form.departureDate || today}
           onChange={handleChange}
           style={styles.input}/>
           </div>
