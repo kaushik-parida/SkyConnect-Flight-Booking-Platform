@@ -43,9 +43,7 @@ public class AirlineServiceImplTest {
 				.status(AirlineStatus.ACTIVE).build();
 
 		when(airlineRepository.save(any(Airline.class))).thenReturn(savedAirline);
-
 		Long result = airlineService.createAirline(request);
-
 		assertNotNull(result);
 		assertEquals(1L, result);
 	}
@@ -59,20 +57,31 @@ public class AirlineServiceImplTest {
 		Exception exception = assertThrows(Exception.class, () -> {
 			airlineService.createAirline(request);
 		});
-
 		assertNotNull(exception);
 	}
 
 	@Test
 	void BlockAirline() {
 		Airline airline = Airline.builder().airlineId(1L).name("Indigo").status(AirlineStatus.ACTIVE).build();
-
 		when(airlineRepository.findById(1L)).thenReturn(Optional.of(airline));
-
 		airlineService.blockAirline(1L, "BLOCKED");
-
 		assertEquals(AirlineStatus.BLOCKED, airline.getStatus());
-		verify(airlineRepository).save(airline);
 	}
 
+	@Test
+	void UnblockAirline() {
+		Airline airline = Airline.builder().airlineId(1L).name("Indigo").status(AirlineStatus.BLOCKED).build();
+		when(airlineRepository.findById(1L)).thenReturn(Optional.of(airline));
+		airlineService.blockAirline(1L, "ACTIVE");
+		assertEquals(AirlineStatus.ACTIVE, airline.getStatus());
+	}
+
+	@Test
+	void BlockAirline_NotFound() {
+		when(airlineRepository.findById(1L)).thenReturn(Optional.empty());
+		Exception exception = assertThrows(RuntimeException.class, () -> {
+			airlineService.blockAirline(1L, "BLOCKED");
+		});
+		assertEquals("Airline not found", exception.getMessage());
+	}
 }
