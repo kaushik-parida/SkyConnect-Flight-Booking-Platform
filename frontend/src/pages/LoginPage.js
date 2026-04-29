@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = () => {
     if(!email || !password){
-      alert("Enter email and password");
+      setMessage("Please enter email and password");
       return;
     }
   const role = email === "admin@gmail.com" ? "ADMIN" : "USER";
@@ -24,7 +25,9 @@ function LoginPage() {
     <div style={styles.container}>
       <div style={styles.card}>
         <h2>Login</h2>
-
+        {message && (
+          <div style={styles.message}>{message}</div>
+        )}
         <input
           style={styles.input}
           placeholder="Email"
