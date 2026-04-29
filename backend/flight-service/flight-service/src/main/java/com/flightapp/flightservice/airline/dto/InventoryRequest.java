@@ -1,5 +1,7 @@
 package com.flightapp.flightservice.airline.dto;
 
+import java.util.Date;
+
 import lombok.Data;
 
 @Data
@@ -9,8 +11,8 @@ public class InventoryRequest {
 	private String source;
 	private String destination;
 
-	private String departureTime;
-	private String arrivalTime;
+	private Date departureTime;
+	private Date arrivalTime;
 
 	private int economySeats;
 	private int businessSeats;
