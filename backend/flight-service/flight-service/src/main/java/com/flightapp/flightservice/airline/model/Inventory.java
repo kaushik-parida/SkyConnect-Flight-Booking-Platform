@@ -1,5 +1,7 @@
 package com.flightapp.flightservice.airline.model;
 
+import java.util.Date;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,8 +27,8 @@ public class Inventory {
 	private String source;
 	private String destination;
 
-	private String departureTime;
-	private String arrivalTime;
+	private Date departureTime;
+	private Date arrivalTime;
 
 	private int economySeats;
 	private int businessSeats;
