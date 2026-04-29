@@ -1,40 +1,16 @@
-# =========================
-# Java / Spring Boot
-# =========================
-
-*.class
-*.log
-
-# Package files
-*.jar
-*.war
-*.nar
-*.ear
-
-# Build directories
+# Java / Spring
 target/
-build/
-out/
+*.class
 
-# =========================
-# Maven / Gradle
-# =========================
-.gradle/
-
-# =========================
-# IDE Files
-# =========================
-
-# Eclipse
+# IDE files
+.metadata/
+.factorypath
 .project
 .classpath
 .settings/
-.metadata/
-.factorypath
 
-# IntelliJ
-.idea/
-*.iml
+# Node
+node_modules/
 
 # VS Code
 .vscode/
@@ -86,3 +62,5 @@ Thumbs.db
 # Allow only root ones
 !.gitignore
 !.gitattributes
+
+src/main/resources/application-local.properties
