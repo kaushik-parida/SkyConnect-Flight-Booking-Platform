@@ -1,7 +1,11 @@
 const axios = require("axios");
 
+
 const FLIGHT_SERVICE_URL = process.env.FLIGHT_SERVICE_URL;
 
+
+const SEARCH_FLIGHT_URL = FLIGHT_SERVICE_URL + "/api/v1.0/flight/search";
+const CREATE_FLIGHT_URL = FLIGHT_SERVICE_URL + "/api/v1.0/flights";
 
 
 exports.searchFlights = async (req, res) => {
@@ -11,7 +15,7 @@ exports.searchFlights = async (req, res) => {
         console.log("Gateway: Forwarding search request");
 
         const response = await axios.post(
-            `${FLIGHT_SERVICE_URL}/api/v1.0/flight/search`,
+            SEARCH_FLIGHT_URL,
             searchData,
             {
                 headers: {
@@ -28,7 +32,6 @@ exports.searchFlights = async (req, res) => {
 
         console.error("Search Error:", error.response?.status);
 
-
         if (error.response) {
             return res.status(error.response.status).json({
                 message: error.response.data?.message || "Error from Flight Service"
@@ -42,14 +45,13 @@ exports.searchFlights = async (req, res) => {
 };
 
 
-
 exports.createFlight = async (req, res) => {
     try {
 
         console.log("Gateway: Forwarding create flight request");
 
         const response = await axios.post(
-            `${FLIGHT_SERVICE_URL}/api/v1.0/flights`,
+            CREATE_FLIGHT_URL,
             req.body,
             {
                 headers: {
