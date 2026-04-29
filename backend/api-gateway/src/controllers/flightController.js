@@ -1,5 +1,8 @@
 const axios = require("axios");
 
+const FLIGHT_SERVICE_URL = process.env.FLIGHT_SERVICE_URL;
+
+
 
 exports.searchFlights = async (req, res) => {
     try {
@@ -8,23 +11,31 @@ exports.searchFlights = async (req, res) => {
         console.log("Gateway: Forwarding search request");
 
         const response = await axios.post(
-            "http://localhost:8082/api/v1.0/flight/search", // match flight service
+            `${FLIGHT_SERVICE_URL}/api/v1.0/flight/search`,
             searchData,
             {
                 headers: {
-                    "x-user-id": req.user.id,
-                    "x-user-email": req.user.email,
-                    "x-user-role": req.user.role
+                    "X-User-Id": req.user.id,
+                    "X-User-Email": req.user.email,
+                    "X-User-Role": req.user.role
                 }
             }
         );
 
-        res.json(response.data);
+        return res.status(200).json(response.data);
 
     } catch (error) {
-        console.error("Error calling Flight Service (search):", error.message);
 
-        res.status(500).json({
+        console.error("Search Error:", error.response?.status);
+
+
+        if (error.response) {
+            return res.status(error.response.status).json({
+                message: error.response.data?.message || "Error from Flight Service"
+            });
+        }
+
+        return res.status(500).json({
             message: "Flight search failed"
         });
     }
@@ -34,8 +45,11 @@ exports.searchFlights = async (req, res) => {
 
 exports.createFlight = async (req, res) => {
     try {
+
+        console.log("Gateway: Forwarding create flight request");
+
         const response = await axios.post(
-            "http://localhost:8082/api/v1.0/flights",
+            `${FLIGHT_SERVICE_URL}/api/v1.0/flights`,
             req.body,
             {
                 headers: {
@@ -50,7 +64,7 @@ exports.createFlight = async (req, res) => {
 
     } catch (error) {
 
-        console.error("Gateway Error:", error.response?.status);
+        console.error("Create Error:", error.response?.status);
 
 
         if (error.response) {
@@ -58,7 +72,6 @@ exports.createFlight = async (req, res) => {
                 message: error.response.data?.message || "Error from Flight Service"
             });
         }
-
 
         return res.status(500).json({
             message: "Flight create failed"
