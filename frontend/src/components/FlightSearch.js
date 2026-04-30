@@ -16,6 +16,7 @@ const FlightSearch = () => {
   });
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("error");
+  const [results, setResults] = useState(null);
   const today = new Date().toISOString().split("T")[0];
   const showMessage = (text, type = "error") => {
     setMessage(text);
@@ -27,7 +28,7 @@ const FlightSearch = () => {
   const handleChange = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
   };
-  const handleSearch =async () => {
+  const handleSearch = async () => {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       showMessage("Please login to continue with your booking");
@@ -50,20 +51,51 @@ const FlightSearch = () => {
       showMessage("Return date cannot be before departure date");
       return;
     }
-    try{
-     const request={ from:form.from,
-      to:form.to,
-      departureDate:form.departureDate,
-      returnDate:form.returnDate||null,
-      tripType:form.returnDate?"ROUND_TRIP":"ONE_WAY",
+    try {
+      const request = {
+        from: form.from,
+        to: form.to,
+        departureDate: form.departureDate,
+        returnDate: form.returnDate || null,
+        tripType: form.returnDate ? "ROUND_TRIP" : "ONE_WAY",
+        sortBy: "PRICE",
+        sortDirection: false,
+      };
+      const data = await searchFlights(request);
+      console.log("Search result:", data);
+      setResults(data);
+      showMessage("Fligts found,success");
+    } catch (error) {
+      setResults(null);
+      showMessage("No Flights found");
+    }
   };
-    const data = await searchFlights(request);
-    console.log("Search result:",data);
-    showMessage("Fligts found,success");
-}catch(error){
-  showMessage("No Flights found");
-}
-  };
+  const renderFlightCard = (flight) => (
+    <div key={flight.flightId} style={styles.flightCard}>
+      <div>
+        <h4 style={styles.flightNo}>{flight.flightNumber}</h4>
+        <p style={styles.airline}>SkyConnect</p>
+      </div>
+      <div style={styles.timeBox}>
+        <h3>{flight.departureTime.slice(11, 16)}</h3>
+        <p>{flight.fromPlace}</p>
+      </div>
+      <div style={styles.durationBox}>
+        <p>
+          {flight.departureTime.slice(11, 16)} -{" "}
+          {flight.arrivalTime.slice(11, 16)}
+        </p>
+      </div>
+      <div style={styles.timeBox}>
+        <h3>{flight.arrivalTime.slice(11, 16)}</h3>
+        <p>{flight.toPlace}</p>
+      </div>
+      <div style={styles.priceBox}>
+        <h3>₹{flight.ticketCost}</h3>
+        <button style={styles.bookBtn}>Book</button>
+      </div>
+    </div>
+  );
   return (
     <div style={styles.container}>
       {message && (
@@ -120,6 +152,18 @@ const FlightSearch = () => {
           Search Flights
         </button>
       </div>
+      {results && results.onwardFlights.length > 0 && (
+        <div style={styles.results}>
+          <h3 style={styles.resultTitle}>Onwards Flights</h3>
+          {results.onwardFlights.map((flight) => renderFlightCard(flight))}
+        </div>
+      )}
+      {results && results.returnFlights.length > 0 && (
+        <div style={styles.results}>
+          <h3 style={styles.resultTitle}>Return Flights</h3>
+          {results.returnFlights.map((flight) => renderFlightCard(flight))}
+        </div>
+      )}
     </div>
   );
 };
@@ -138,7 +182,7 @@ const styles = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)", 
+    gridTemplateColumns: "repeat(4, 1fr)",
     gap: "15px",
   },
   field: {
@@ -187,5 +231,56 @@ const styles = {
     borderRadius: "8px",
     zIndex: 999,
   },
+  results: {
+    background: "white",
+    marginTop: "25px",
+    padding: "20px",
+    borderRadius: "12px",
+    textAlign: "left",
+  },
+  resultTitle: {
+    color: "#0b2c4a",
+    marginBottom: "15px",
+  },
+  flightCard: {
+    display: "grid",
+    gridTemplateColumns: "1.2fr 1fr 1.5fr 1fr 1fr",
+    alignItems: "center",
+    gap: "15px",
+    border: "1px solid #ddd",
+    borderRadius: "10px",
+    padding: "16px",
+    marginTop: "12px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+  },
+  flightNo: {
+    margin: 0,
+    color: "#0b2c4a",
+  },
+  airline: {
+    margin: "4px 0 0",
+    color: "#777",
+    fontSize: "13px",
+  },
+  timeBox: {
+    textAlign: "center",
+  },
+  priceBox: {
+    textAlign: "right",
+  },
+  bookBtn: {
+    background: "#0071c2",
+    color: "white",
+    border: "none",
+    padding: "8px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+  durationBox: {
+    textAlign: "center",
+    color: "#666",
+    fontSize: "13px",
+  },
+
 };
 export default FlightSearch;
