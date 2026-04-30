@@ -220,6 +220,8 @@
 					<argLine>
 						${argLine}
 						-Dspring.profiles.active=test
+						-Dspring.cloud.config.enabled=false
+						-Dspring.config.import=optional:configserver:
 					</argLine>
 				</configuration>
 			</plugin>
