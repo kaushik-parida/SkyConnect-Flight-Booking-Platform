@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +30,6 @@ import com.flightapp.authservice.security.JwtUtil;
 import com.flightapp.authservice.service.AuthServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
-@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class AuthServiceApplicationTests {
 
 	@InjectMocks
@@ -58,8 +58,8 @@ class AuthServiceApplicationTests {
 		when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
 		when(passwordEncoder.encode(anyString())).thenReturn("encodedPass");
 
-		User savedUser = User.builder().id(1L).email(request.getEmail()).password("encodedPass").role(Role.USER)
-				.build();
+		User savedUser = User.builder().id(UUID.randomUUID()).email(request.getEmail()).password("encodedPass")
+				.role(Role.USER).build();
 
 		when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
@@ -76,7 +76,8 @@ class AuthServiceApplicationTests {
 		request.setUsernameOrEmail("test@gmail.com");
 		request.setPassword("12345");
 
-		User user = User.builder().id(1L).email("test@gmail.com").password("encodedPass").role(Role.USER).build();
+		User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").password("encodedPass").role(Role.USER)
+				.build();
 
 		when(userRepository.findByEmail(request.getUsernameOrEmail())).thenReturn(Optional.of(user));
 
@@ -112,7 +113,8 @@ class AuthServiceApplicationTests {
 		request.setUsernameOrEmail("test@gmail.com");
 		request.setPassword("wrongpass");
 
-		User user = User.builder().email("test@gmail.com").password("encodedPass").role(Role.USER).build();
+		User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").password("encodedPass").role(Role.USER)
+				.build();
 
 		when(userRepository.findByEmail(request.getUsernameOrEmail())).thenReturn(Optional.of(user));
 
@@ -147,7 +149,7 @@ class AuthServiceApplicationTests {
 		request.setFullName("Test");
 		request.setEmail("test@gmail.com");
 		request.setPassword("12345");
-		request.setGender("MALE1");
+		request.setGender("INVALID");
 
 		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
 			authService.register(request);
@@ -159,7 +161,7 @@ class AuthServiceApplicationTests {
 	@Test
 	void testJwtTokenGeneration() {
 
-		User user = User.builder().id(1L).email("test@gmail.com").role(Role.USER).build();
+		User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").role(Role.USER).build();
 
 		when(jwtUtil.generateToken(user)).thenReturn("mockToken");
 
