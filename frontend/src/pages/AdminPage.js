@@ -11,6 +11,9 @@ function AdminPage() {
   const [airlines, setAirlines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [actionType, setActionType] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedAirline, setSelectedAirline] = useState(null);
   const [form, setForm] = useState({
     name: ""
   });
@@ -39,26 +42,35 @@ function AdminPage() {
     }
     try {
       await addAirline(form);
-      setForm({ name: ""});
+      setForm({ name: "" });
       loadAirlines();
     } catch {
       setError("Error adding airline");
     }
   };
-  const handleBlock = async (id) => {
-    try {
-      await blockAirline(id);
-      loadAirlines();
-    } catch {
-      setError("Error blocking airline");
-    }
+  const handleBlock = (airline) => {
+    setSelectedAirline(airline);
+    setActionType("BLOCK");
+    setShowConfirm(true);
   };
-  const handleUnblock = async (id) => {
+  const handleUnblock = (airline) => {
+    setSelectedAirline(airline);
+    setActionType("UNBLOCK");
+    setShowConfirm(true);
+  };
+  const handleConfirm = async () => {
     try {
-      await unblockAirline(id);
+      if (actionType === "BLOCK") {
+        await blockAirline(selectedAirline.airlineId);
+      } else {
+        await unblockAirline(selectedAirline.airlineId);
+      }
+      setShowConfirm(false);
+      setSelectedAirline(null);
+      setActionType("");
       loadAirlines();
     } catch {
-      setError("Error unblocking airline");
+      setError("Action failed");
     }
   };
   return (
@@ -99,17 +111,17 @@ function AdminPage() {
                     <td>{airline.name}</td>
                     <td>{airline.status}</td>
                     <td>
-                      {airline.status==="BLOCKED" ? (
+                      {airline.status === "BLOCKED" ? (
                         <button
                           style={styles.unblockBtn}
-                          onClick={() => handleUnblock(airline.airlineId)}
+                          onClick={() => handleUnblock(airline)}
                         >
                           Unblock
                         </button>
                       ) : (
                         <button
                           style={styles.blockBtn}
-                          onClick={() => handleBlock(airline.airlineId)}
+                          onClick={() => handleBlock(airline)}
                         >
                           Block
                         </button>
@@ -122,6 +134,18 @@ function AdminPage() {
           </div>
         </div>
       </div>
+      {showConfirm && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalBox}>
+            <h3>Are you sure you want to {actionType.toLowerCase()} this airline?{" "}{selectedAirline?.name}?</h3>
+            <div style={styles.modalActions}>
+              <button style={styles.confirmBtn} onClick={handleConfirm}>Yes</button>
+              <button style={styles.cancelBtn} onClick={() => setShowConfirm(false)}> No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -183,6 +207,33 @@ const styles = {
     border: "none",
     borderRadius: "5px",
   },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+  },
+  modalBox: {
+    background: "white",
+    padding: "20px",
+    margin: "200px auto",
+    width: "350px",
+    textAlign: "center",
+  },
+  confirmBtn: {
+    background: "red",
+    color: "white",
+    padding: "8px",
+    margin: "5px",
+    border: "none",
+  },
+  cancelBtn: {
+    padding: "8px",
+    margin: "5px",
+  },
+
   error: {
     color: "red",
   },
