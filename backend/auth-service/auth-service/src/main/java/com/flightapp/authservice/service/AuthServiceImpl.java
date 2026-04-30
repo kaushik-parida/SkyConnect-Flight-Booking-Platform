@@ -1,6 +1,7 @@
 package com.flightapp.authservice.service;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import com.flightapp.authservice.dto.LoginResponse;
 import com.flightapp.authservice.dto.SignupRequest;
 import com.flightapp.authservice.dto.SignupResponse;
 import com.flightapp.authservice.dto.UserInfo;
+import com.flightapp.authservice.dto.UserResponse;
 import com.flightapp.authservice.entity.Role;
 import com.flightapp.authservice.entity.User;
 import com.flightapp.authservice.repository.UserRepository;
@@ -65,5 +67,16 @@ public class AuthServiceImpl implements AuthService {
 				.build();
 
 		return CommonResponse.<LoginResponse>builder().success(true).data(loginResponse).build();
+	}
+
+	@Override
+	public UserResponse getUserById(String userId) {
+
+		UUID uuid = UUID.fromString(userId);
+
+		User user = userRepository.findById(uuid).orElseThrow(() -> new RuntimeException("User not found"));
+
+		return UserResponse.builder().userId(user.getId().toString()).email(user.getEmail())
+				.fullName(user.getFullName()).role(user.getRole().name()).enabled(user.isEnabled()).build();
 	}
 }
