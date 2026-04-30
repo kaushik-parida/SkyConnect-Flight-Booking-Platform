@@ -1,15 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { searchFlights } from "../services/api";
 
 const places = [
   "Bangalore",
-  "Delhi",
-  "Mumbai",
-  "Chennai",
-  "Hyderabad",
-  "Kolkata",
-  "Paris",
-  "Germany",
+  "Delhi"
 ];
 const FlightSearch = () => {
   const navigate = useNavigate();
@@ -29,10 +24,10 @@ const FlightSearch = () => {
       setMessage("");
     }, 3000);
   };
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
   };
-  const handleSearch = () => {
+  const handleSearch =async () => {
     const isLoggedIn = localStorage.getItem("isLoggedIn");
     if (!isLoggedIn) {
       showMessage("Please login to continue with your booking");
@@ -55,8 +50,19 @@ const FlightSearch = () => {
       showMessage("Return date cannot be before departure date");
       return;
     }
-    console.log("Search Data:", form);
-    showMessage("Searching flights...", "success");
+    try{
+     const request={ from:form.from,
+      to:form.to,
+      departureDate:form.departureDate,
+      returnDate:form.returnDate||null,
+      tripType:form.returnDate?"ROUND_TRIP":"ONE_WAY",
+  };
+    const data = await searchFlights(request);
+    console.log("Search result:",data);
+    showMessage("Fligts found,success");
+}catch(error){
+  showMessage("No Flights found");
+}
   };
   return (
     <div style={styles.container}>
@@ -76,8 +82,8 @@ const FlightSearch = () => {
           <label style={styles.label}>From</label>
           <select name="from" onChange={handleChange} style={styles.input}>
             <option value="">Select city</option>
-            {places.map((p) => (
-              <option key={p}>{p}</option>
+            {places.map((place) => (
+              <option key={place}>{place}</option>
             ))}
           </select>
         </div>
@@ -85,8 +91,8 @@ const FlightSearch = () => {
           <label style={styles.label}>To</label>
           <select name="to" onChange={handleChange} style={styles.input}>
             <option value="">Select city</option>
-            {places.map((p) => (
-              <option key={p}>{p}</option>
+            {places.map((place) => (
+              <option key={place}>{place}</option>
             ))}
           </select>
         </div>
