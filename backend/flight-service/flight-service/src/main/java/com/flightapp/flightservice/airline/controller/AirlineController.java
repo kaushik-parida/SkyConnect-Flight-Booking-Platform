@@ -1,6 +1,10 @@
 package com.flightapp.flightservice.airline.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.flightapp.flightservice.airline.dto.AirlineRequest;
 import com.flightapp.flightservice.airline.dto.InventoryRequest;
+import com.flightapp.flightservice.airline.model.Airline;
 import com.flightapp.flightservice.airline.service.AirlineService;
 import com.flightapp.flightservice.airline.service.InventoryService;
 
@@ -17,6 +22,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1.0/airline")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AirlineController {
 
 	private final AirlineService airlineService;
@@ -42,5 +48,10 @@ public class AirlineController {
 	@PostMapping("/inventory/add")
 	public ResponseEntity<Long> addInventory(@RequestBody InventoryRequest request) {
 		return ResponseEntity.ok(inventoryService.addInventory(request));
+	}
+
+	@GetMapping
+	public ResponseEntity<List<Airline>> getAllAirlines() {
+		return ResponseEntity.ok(airlineService.getAllAirlines());
 	}
 }

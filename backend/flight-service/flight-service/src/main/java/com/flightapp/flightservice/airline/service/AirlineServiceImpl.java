@@ -1,5 +1,7 @@
 package com.flightapp.flightservice.airline.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.flightapp.flightservice.airline.dto.AirlineRequest;
@@ -35,5 +37,10 @@ public class AirlineServiceImpl implements AirlineService {
 		airlineRepository.save(airline);
 		flightInventoryStatusService.updateFlightsByAirlineStatus(id, airlineStatus.name());
 
+	}
+
+	@Override
+	public List<Airline> getAllAirlines() {
+		return airlineRepository.findAll();
 	}
 }

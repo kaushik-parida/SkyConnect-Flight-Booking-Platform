@@ -12,8 +12,7 @@ function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
-    airlineName: "",
-    airlineCode: "",
+    name: ""
   });
   useEffect(() => {
     loadAirlines();
@@ -30,17 +29,17 @@ function AdminPage() {
       setLoading(false);
     }
   };
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
   };
   const handleAdd = async () => {
-    if (!form.airlineName || !form.airlineCode) {
-      setError("Name and Code required");
+    if (!form.name) {
+      setError("Airline name required");
       return;
     }
     try {
       await addAirline(form);
-      setForm({ airlineName: "", airlineCode: "" });
+      setForm({ name: ""});
       loadAirlines();
     } catch {
       setError("Error adding airline");
@@ -73,16 +72,9 @@ function AdminPage() {
           <div style={styles.section}>
             <h3>Add Airline</h3>
             <input
-              name="airlineName"
+              name="name"
               placeholder="Airline Name"
-              value={form.airlineName}
-              onChange={handleChange}
-              style={styles.input}
-            />
-            <input
-              name="airlineCode"
-              placeholder="Airline Code"
-              value={form.airlineCode}
+              value={form.name}
               onChange={handleChange}
               style={styles.input}
             />
@@ -97,29 +89,27 @@ function AdminPage() {
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Code</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {airlines.map((a) => (
-                  <tr key={a.airlineId}>
-                    <td>{a.airlineName}</td>
-                    <td>{a.airlineCode}</td>
-                    <td>{a.isBlocked ? "Blocked" : "Active"}</td>
+                {airlines.map((airline) => (
+                  <tr key={airline.airlineId}>
+                    <td>{airline.name}</td>
+                    <td>{airline.status}</td>
                     <td>
-                      {a.isBlocked ? (
+                      {airline.status==="BLOCKED" ? (
                         <button
                           style={styles.unblockBtn}
-                          onClick={() => handleUnblock(a.airlineId)}
+                          onClick={() => handleUnblock(airline.airlineId)}
                         >
                           Unblock
                         </button>
                       ) : (
                         <button
                           style={styles.blockBtn}
-                          onClick={() => handleBlock(a.airlineId)}
+                          onClick={() => handleBlock(airline.airlineId)}
                         >
                           Block
                         </button>

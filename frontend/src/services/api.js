@@ -11,7 +11,7 @@ const flightAPI = axios.create({
 export const login = (data) => authAPI.post("/auth/login", data);
 
 export const getAirlines = async () => {
-  const res = await flightAPI.get("/airlines");
+  const res = await flightAPI.get("/airline");
   return res.data;
 };
 export const searchFlights = async (data) => {
@@ -20,13 +20,17 @@ export const searchFlights = async (data) => {
 };
 
 export const addAirline = (data) => {
-  return flightAPI.post("/airlines", data);
+  return flightAPI.post("/airline/register", data);
 };
 
 export const blockAirline = (id) => {
-  return flightAPI.put(`/airlines/${id}/block`);
+  return flightAPI.put(`/airlines/${id}`,"BLOCKED",{
+    headers:{"Content-type":"application/json"},
+  });
 };
 
 export const unblockAirline = (id) => {
-  return flightAPI.put(`/airlines/${id}/unblock`);
+  return flightAPI.put(`/airlines/${id}`,"ACTIVE",{
+    headers:{"Content-Type":"application/json"},
+  });
 };
