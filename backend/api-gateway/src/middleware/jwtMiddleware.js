@@ -17,8 +17,8 @@ const jwtMiddleware = (req, res, next) => {
 
 
         req.user = {
-            id: decoded.userId,
-            email: decoded.sub,
+            id: decoded.sub,
+            email: decoded.email,
             role: decoded.role
         };
 

@@ -1,5 +1,7 @@
 package com.flightapp.authservice.dto;
 
+import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,7 +9,7 @@ import lombok.Data;
 @Builder
 public class SignupResponse {
 
-	private Long userId;
+	private UUID userId;
 	private String email;
 	private String role;
 }
