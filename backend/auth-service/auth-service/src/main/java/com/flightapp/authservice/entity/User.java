@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
-// ✅ Hibernate 6 import
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
@@ -45,7 +44,7 @@ public class User {
 
 	@Enumerated(EnumType.STRING)
 	private Role role;
-
+	@Builder.Default
 	private boolean enabled = true;
 
 	@Column(nullable = false)
