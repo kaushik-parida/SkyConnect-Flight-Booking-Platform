@@ -24,13 +24,13 @@ export const addAirline = (data) => {
 };
 
 export const blockAirline = (id) => {
-  return flightAPI.put(`/airlines/${id}`,"BLOCKED",{
+  return flightAPI.put(`/airline/${id}`,"BLOCKED",{
     headers:{"Content-type":"application/json"},
   });
 };
 
 export const unblockAirline = (id) => {
-  return flightAPI.put(`/airlines/${id}`,"ACTIVE",{
+  return flightAPI.put(`/airline/${id}`,"ACTIVE",{
     headers:{"Content-Type":"application/json"},
   });
 };
