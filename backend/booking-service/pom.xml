@@ -41,10 +41,18 @@
 			**/model/**,
 			**/dto/**,
 			**/exception/*Exception.java,
-			**/BookingServiceApplication.java
-			**/config/AppConfig.java
+			**/BookingServiceApplication.java,
+			**/config/AppConfig.java,
 			**/config/OpenApiConfig.java
 		</sonar.exclusions>
+		<sonar.coverage.exclusions>
+			**/model/**,
+			**/dto/**,
+			**/exception/*Exception.java,
+			**/BookingServiceApplication.java,
+			**/config/AppConfig.java,
+			**/config/OpenApiConfig.java
+		</sonar.coverage.exclusions>
 		<sonar.test.exclusions>
 			**/test/**
 		</sonar.test.exclusions>
@@ -56,6 +64,11 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
 
 		<dependency>
@@ -110,6 +123,11 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
 		<dependency>
