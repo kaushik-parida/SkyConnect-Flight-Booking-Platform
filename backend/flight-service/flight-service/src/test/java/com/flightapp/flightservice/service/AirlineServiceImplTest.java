@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -24,6 +23,9 @@ import com.flightapp.flightservice.airline.service.AirlineServiceImpl;
 public class AirlineServiceImplTest {
 	@Mock
 	private AirlineRepository airlineRepository;
+
+	@Mock
+	private FlightInventoryStatusService flightInventoryStatusService;
 
 	@InjectMocks
 	private AirlineServiceImpl airlineService;

@@ -21,7 +21,7 @@ import com.flightapp.flightservice.airline.service.InventoryService;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1.0/airline")
+@RequestMapping("/api/v1.0/flights/airline")
 @CrossOrigin(origins = "http://localhost:3000")
 public class AirlineController {
 
