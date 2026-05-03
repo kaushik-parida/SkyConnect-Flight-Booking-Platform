@@ -19,6 +19,7 @@
 
 	<properties>
 		<java.version>17</java.version>
+		<spring-cloud.version>2025.0.0</spring-cloud.version>
 	</properties>
 
 	<dependencies>
@@ -72,8 +73,22 @@
 			<artifactId>junit-platform-suite</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
 	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 
 	<build>
@@ -189,7 +204,8 @@
 								<exclude>**/*Test.class</exclude>
 								<exclude>**/*Tests.class</exclude>
 								<exclude>**/*TestSuite.class</exclude>
-
+								<exclude>**/*Config.class</exclude>
+								<exclude>**/FlightServiceApplication.class</exclude>
 								<exclude>com/flightapp/flightservice/model/**</exclude>
 								<exclude>com/flightapp/flightservice/dto/**</exclude>
 								<exclude>
