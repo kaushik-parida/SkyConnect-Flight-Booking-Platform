@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchFlights } from "../services/api";
-
-const places = [
-  "Bangalore",
-  "Delhi"
-];
+const places = ["Bangalore","Delhi","Mumbai","Chennai","Hyderabad","Kolkata","Paris","Germany"];
 const FlightSearch = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -14,6 +10,7 @@ const FlightSearch = () => {
     departureDate: "",
     returnDate: "",
   });
+  const [flights, setFlights] = useState([]); 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("error");
   const [results, setResults] = useState(null);
@@ -52,22 +49,15 @@ const FlightSearch = () => {
       return;
     }
     try {
-      const request = {
-        from: form.from,
-        to: form.to,
-        departureDate: form.departureDate,
-        returnDate: form.returnDate || null,
-        tripType: form.returnDate ? "ROUND_TRIP" : "ONE_WAY",
-        sortBy: "PRICE",
-        sortDirection: false,
-      };
-      const data = await searchFlights(request);
-      console.log("Search result:", data);
-      setResults(data);
-      showMessage("Fligts found,success");
+      showMessage("Searching flights...", "success");
+      const data = await searchFlights(form);
+      console.log("Flights:", data);
+      setFlights(data);
+      showMessage("Flights loaded successfully", "success");
+      navigate("/results", { state: data });
     } catch (error) {
-      setResults(null);
-      showMessage("No Flights found");
+      console.error(error);
+      showMessage("Failed to fetch flights");
     }
   };
   const renderFlightCard = (flight) => (
@@ -174,11 +164,6 @@ const styles = {
     borderRadius: "12px",
     maxWidth: "900px",
     margin: "50px auto",
-  },
-  title: {
-    color: "white",
-    marginBottom: "20px",
-    textAlign: "center",
   },
   grid: {
     display: "grid",
