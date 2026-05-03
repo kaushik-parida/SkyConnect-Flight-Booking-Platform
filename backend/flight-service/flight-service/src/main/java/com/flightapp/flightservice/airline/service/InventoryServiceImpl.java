@@ -1,5 +1,7 @@
 package com.flightapp.flightservice.airline.service;
 
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 
 import com.flightapp.flightservice.airline.dto.InventoryRequest;
@@ -25,5 +27,22 @@ public class InventoryServiceImpl implements InventoryService {
 				.businessSeats(request.getBusinessSeats()).build();
 
 		return inventoryRepository.save(inventory).getId();
+	}
+
+	@Override
+	public void updateSeats(Long id, Map<String, Object> request) {
+
+		Inventory inventory = inventoryRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Flight not found"));
+
+		if (request.containsKey("economySeats")) {
+			inventory.setEconomySeats((Integer) request.get("economySeats"));
+		}
+
+		if (request.containsKey("businessSeats")) {
+			inventory.setBusinessSeats((Integer) request.get("businessSeats"));
+		}
+
+		inventoryRepository.save(inventory);
 	}
 }

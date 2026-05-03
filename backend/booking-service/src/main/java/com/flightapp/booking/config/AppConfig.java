@@ -1,6 +1,7 @@
 package com.flightapp.booking.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -9,7 +10,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class AppConfig {
 
 	@Bean
-	public WebClient webClient(@Value("${flight.service.url}") String flightServiceUrl) {
-		return WebClient.builder().baseUrl(flightServiceUrl).defaultHeader("Content-Type", "application/json").build();
+	@LoadBalanced
+	public WebClient.Builder loadBalancedWebClientBuilder() {
+		return WebClient.builder().defaultHeader("Content-Type", "application/json");
+	}
+
+	@Bean
+	public WebClient webClient(WebClient.Builder loadBalancedWebClientBuilder,
+			@Value("${flight.service.url}") String flightServiceUrl) {
+		return loadBalancedWebClientBuilder.baseUrl(flightServiceUrl).build();
 	}
 }
