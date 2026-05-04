@@ -108,4 +108,11 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 		}
 	}
 
+	@Override
+	public FlightResponse getFlightById(Long id) {
+		Flight flight = flightRepository.findById(id)
+				.orElseThrow(() -> new NoFlightsFoundException("Flight not found with id: " + id));
+		return mapToResponse(flight);
+	}
+
 }
