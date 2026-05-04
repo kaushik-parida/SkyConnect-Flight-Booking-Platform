@@ -21,4 +21,7 @@ public class CreateBookingRequest {
 	@NotNull(message = "Passenger details are required")
 	@Size(min = 1, message = "At least 1 passenger is required")
 	private List<PassengerRequest> passengers;
+	
+	@NotBlank(message = "Seat class is required (ECONOMY/BUSINESS)")
+	private String seatClass;
 }

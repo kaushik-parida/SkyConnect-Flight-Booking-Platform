@@ -47,6 +47,7 @@ public class GlobalExceptionHandlerTest {
 		request.setUserId("USER-001");
 		request.setPaymentMethod("UPI");
 		request.setPassengers(List.of(passenger));
+		request.setSeatClass("ECONOMY");
 		return request;
 	}
 

@@ -29,6 +29,7 @@ import com.flightapp.booking.model.MealPreference;
 import com.flightapp.booking.model.Payment;
 import com.flightapp.booking.model.PaymentMethod;
 import com.flightapp.booking.model.PaymentStatus;
+import com.flightapp.booking.model.SeatClass;
 import com.flightapp.booking.repository.BookingRepository;
 import com.flightapp.booking.service.BookingService;
 
@@ -49,7 +50,8 @@ public class BookingServiceImplementation implements BookingService {
 	@Override
 	@Transactional
 	public Long createBooking(Long flightId, CreateBookingRequest request) {
-		log.info("Creating booking — userId: {} flightId: {}", request.getUserId(), flightId);
+		log.info("Creating booking — userId: {} flightId: {} class: {}", request.getUserId(), flightId,
+				request.getSeatClass());
 
 		boolean duplicateExists = bookingRepository.existsByUserIdAndFlightIdAndStatusNot(request.getUserId(), flightId,
 				BookingStatus.CANCELLED);
@@ -65,18 +67,26 @@ public class BookingServiceImplementation implements BookingService {
 			throw new FlightNotActiveException("Flight " + flightId + " is not active");
 		}
 
+		SeatClass selectedClass = SeatClass.valueOf(request.getSeatClass().toUpperCase());
 		int numberOfSeats = request.getPassengers().size();
 
-		int availableSeats = flight.getEconomySeats() + flight.getBusinessSeats();
-		if (availableSeats < numberOfSeats) {
-			throw new InsufficientSeatsException("Only " + availableSeats + " seats available");
+		int availableInClass = (selectedClass == SeatClass.ECONOMY) ? flight.getEconomySeats()
+				: flight.getBusinessSeats();
+		if (availableInClass < numberOfSeats) {
+			throw new InsufficientSeatsException("Only " + availableInClass + " seats available in " + selectedClass);
 		}
 
-		BigDecimal totalPrice = flight.getTicketCost().multiply(BigDecimal.valueOf(numberOfSeats));
+		BigDecimal unitPrice = flight.getTicketCost();
+		if (selectedClass == SeatClass.BUSINESS) {
+			unitPrice = unitPrice.multiply(BigDecimal.valueOf(1.5));
+			log.debug("Business class pricing applied (1.5x) — unitPrice: {}", unitPrice);
+		}
 
+		BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(numberOfSeats));
+		
 		Booking booking = Booking.builder().bookingReference(generateBookingReference()).userId(request.getUserId())
 				.flightId(flightId).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
-				.departureTime(flight.getDepartureTime()).status(BookingStatus.PENDING).build();
+				.departureTime(flight.getDepartureTime()).seatClass(selectedClass).status(BookingStatus.PENDING).build();
 
 		request.getPassengers().forEach(p -> {
 			BookingPassenger passenger = BookingPassenger.builder().firstName(p.getFirstName())
@@ -92,10 +102,9 @@ public class BookingServiceImplementation implements BookingService {
 		booking.setPayment(payment);
 
 		Booking saved = bookingRepository.save(booking);
-		log.info("Booking persisted — ref: {} status: PENDING", saved.getBookingReference());
 
 		try {
-			flightServiceClient.reduceSeats(flightId, numberOfSeats);
+			flightServiceClient.reduceSeats(flightId, numberOfSeats, selectedClass);
 			saved.setStatus(BookingStatus.CONFIRMED);
 			saved.getPayment().setPaymentStatus(PaymentStatus.SUCCESS);
 			saved.getPayment().setPaidAt(LocalDateTime.now());
@@ -171,7 +180,7 @@ public class BookingServiceImplementation implements BookingService {
 
 		if (booking.getDepartureTime().isBefore(LocalDateTime.now().plusHours(24))) {
 			throw new com.flightapp.booking.exception.CancellationNotAllowedException(
-					"Cancellation is only allowed 24 hours prior to flight departure");
+					"Cancellation is only permitted at least 24 hours before the scheduled departure time.");
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
@@ -182,7 +191,7 @@ public class BookingServiceImplementation implements BookingService {
 		log.info("Booking cancelled — ref: {}", booking.getBookingReference());
 
 		try {
-			flightServiceClient.restoreSeats(booking.getFlightId(), booking.getNumberOfSeats());
+			flightServiceClient.restoreSeats(booking.getFlightId(), booking.getNumberOfSeats(), booking.getSeatClass());
 		} catch (Exception e) {
 			log.warn("Seat restoration failed — ref: {} reason: {}", booking.getBookingReference(), e.getMessage());
 		}
@@ -194,7 +203,7 @@ public class BookingServiceImplementation implements BookingService {
 	}
 
 	private String generateBookingReference() {
-		return "FLY" + UUID.randomUUID().toString().replace("-", "").substring(0, 7).toUpperCase();   
+		return "FLY" + UUID.randomUUID().toString().replace("-", "").substring(0, 7).toUpperCase();
 	}
 
 	private MealPreference parseMealPreference(String value) {

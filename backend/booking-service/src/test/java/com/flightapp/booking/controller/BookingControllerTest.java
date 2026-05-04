@@ -61,6 +61,7 @@ public class BookingControllerTest {
 		request.setUserId("USER-001");
 		request.setPaymentMethod("UPI");
 		request.setPassengers(List.of(passenger));
+		request.setSeatClass("ECONOMY");
 		return request;
 	}
 
@@ -79,8 +80,6 @@ public class BookingControllerTest {
 				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isCreated())
 				.andExpect(jsonPath("$").value(1));
 	}
-
-
 
 	@Test
 	@DisplayName("POST /booking: should return 400 when passengers list is missing")
@@ -137,7 +136,8 @@ public class BookingControllerTest {
 		when(bookingService.getBookingById(1L)).thenReturn(response);
 
 		mockMvc.perform(get("/api/v1.0/flight/booking/1")).andExpect(status().isOk())
-				.andExpect(jsonPath("$.bookingId").value(1)).andExpect(jsonPath("$.bookingReference").value("FLY1234567"))
+				.andExpect(jsonPath("$.bookingId").value(1))
+				.andExpect(jsonPath("$.bookingReference").value("FLY1234567"))
 				.andExpect(jsonPath("$.status").value("CONFIRMED"));
 	}
 
@@ -170,8 +170,7 @@ public class BookingControllerTest {
 	void test_cancelBooking_returns200() throws Exception {
 		CancelBookingResponse cancelResponse = CancelBookingResponse.builder().bookingId(1L)
 				.bookingReference("FLY1234567").status(BookingStatus.CANCELLED)
-				.message("Booking cancelled successfully")
-				.cancelledAt(LocalDateTime.now()).build();
+				.message("Booking cancelled successfully").cancelledAt(LocalDateTime.now()).build();
 
 		when(bookingService.cancelBooking("FLY1234567", "USER-001")).thenReturn(cancelResponse);
 

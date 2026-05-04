@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,7 @@ import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -49,6 +51,7 @@ import com.flightapp.booking.model.Booking;
 import com.flightapp.booking.model.BookingStatus;
 import com.flightapp.booking.model.Payment;
 import com.flightapp.booking.model.PaymentStatus;
+import com.flightapp.booking.model.SeatClass;
 import com.flightapp.booking.repository.BookingRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -79,11 +82,13 @@ public class BookingServiceImplementationTest {
 		validRequest.setUserId("USER-001");
 		validRequest.setPaymentMethod("UPI");
 		validRequest.setPassengers(List.of(passenger));
+		validRequest.setSeatClass("ECONOMY");
 
 		activeFlight = new FlightResponse();
 		activeFlight.setEconomySeats(42);
-		activeFlight.setBusinessSeats(0);
+		activeFlight.setBusinessSeats(10);
 		activeFlight.setTicketCost(BigDecimal.valueOf(4500.0));
+		activeFlight.setDepartureTime(LocalDateTime.now().plusDays(2));
 		activeFlight.setStatus("ACTIVE");
 	}
 
@@ -91,7 +96,7 @@ public class BookingServiceImplementationTest {
 	@DisplayName("createBooking: should create booking successfully when flight is active and seats available")
 	void test_createBooking_happyPath_returnsBookingId() {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
 				.flightId(1L).numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED)
@@ -104,7 +109,7 @@ public class BookingServiceImplementationTest {
 		assertNotNull(bookingId);
 		assertEquals(1L, bookingId);
 		verify(flightServiceClient, times(1)).getFlightById(1L);
-		verify(flightServiceClient, times(1)).reduceSeats(1L, 1);
+		verify(flightServiceClient, times(1)).reduceSeats(1L, 1, SeatClass.ECONOMY);
 		verify(bookingRepository, times(1)).save(any(Booking.class));
 	}
 
@@ -119,7 +124,7 @@ public class BookingServiceImplementationTest {
 		validRequest.setPassengers(List.of(validRequest.getPassengers().get(0), p2));
 
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		Booking savedBooking = Booking.builder().bookingId(99L).bookingReference("FLY1234567").numberOfSeats(2)
 				.totalPrice(BigDecimal.valueOf(9000.0)).status(BookingStatus.CONFIRMED).build();
@@ -129,7 +134,7 @@ public class BookingServiceImplementationTest {
 		Long bookingId = bookingService.createBooking(1L, validRequest);
 
 		assertEquals(99L, bookingId);
-		verify(flightServiceClient, times(1)).reduceSeats(1L, 2);
+		verify(flightServiceClient, times(1)).reduceSeats(1L, 2, SeatClass.ECONOMY);
 	}
 
 	@Test
@@ -155,7 +160,7 @@ public class BookingServiceImplementationTest {
 		InsufficientSeatsException exception = assertThrows(InsufficientSeatsException.class,
 				() -> bookingService.createBooking(1L, validRequest));
 
-		assertEquals("Only 0 seats available", exception.getMessage());
+		assertTrue(exception.getMessage().contains("ECONOMY"));
 		verify(bookingRepository, never()).save(any(Booking.class));
 	}
 
@@ -182,7 +187,7 @@ public class BookingServiceImplementationTest {
 		InsufficientSeatsException exception = assertThrows(InsufficientSeatsException.class,
 				() -> bookingService.createBooking(1L, validRequest));
 
-		assertEquals("Only 1 seats available", exception.getMessage());
+		assertTrue(exception.getMessage().contains("1 seats available"));
 		verify(bookingRepository, never()).save(any(Booking.class));
 	}
 
@@ -203,8 +208,8 @@ public class BookingServiceImplementationTest {
 	@DisplayName("createBooking: booking should stay PENDING when reduceSeats fails")
 	void test_createBooking_reduceSeatsFailure_bookingStaysPending() {
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doThrow(new RuntimeException("Service Unavailable")).when(flightServiceClient).reduceSeats(anyLong(), anyInt());
-
+		doThrow(new RuntimeException("Service Unavailable")).when(flightServiceClient).reduceSeats(anyLong(), anyInt(),
+				any());
 		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
 				.status(BookingStatus.PENDING).build();
 
@@ -222,8 +227,7 @@ public class BookingServiceImplementationTest {
 		validRequest.getPassengers().get(0).setMealPreference(null);
 
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
-
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
 				.status(BookingStatus.CONFIRMED).build();
 
@@ -233,8 +237,8 @@ public class BookingServiceImplementationTest {
 	}
 
 	@Test
-	@DisplayName("createBooking: available seats should be sum of economy and business seats")
-	void test_createBooking_availableSeatsIsSumOfEconomyAndBusiness() {
+	@DisplayName("createBooking: should throw InsufficientSeatsException when passengers exceed specific class capacity")
+	void test_createBooking_passengersExceedClassCapacity_throwsException() {
 		activeFlight.setEconomySeats(30);
 		activeFlight.setBusinessSeats(10);
 
@@ -247,17 +251,10 @@ public class BookingServiceImplementationTest {
 			passengers.add(p);
 		}
 		validRequest.setPassengers(passengers);
+		validRequest.setSeatClass("ECONOMY");
 
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
-
-		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
-				.status(BookingStatus.CONFIRMED).build();
-
-		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
-
-		assertDoesNotThrow(() -> bookingService.createBooking(1L, validRequest));
-		verify(flightServiceClient, times(1)).reduceSeats(1L, 35);
+		assertThrows(InsufficientSeatsException.class, () -> bookingService.createBooking(1L, validRequest));
 	}
 
 	@Test
@@ -274,7 +271,7 @@ public class BookingServiceImplementationTest {
 		validRequest.setPassengers(passengers);
 
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
 				.status(BookingStatus.CONFIRMED).build();
@@ -290,7 +287,7 @@ public class BookingServiceImplementationTest {
 		validRequest.getPassengers().get(0).setMealPreference("INVALID_VALUE");
 
 		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
-		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt());
+		doNothing().when(flightServiceClient).reduceSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		Booking savedBooking = Booking.builder().bookingId(1L).bookingReference("FLY1234567")
 				.status(BookingStatus.CONFIRMED).build();
@@ -361,22 +358,23 @@ public class BookingServiceImplementationTest {
 	@DisplayName("cancelBookingById: should cancel confirmed booking successfully")
 	void test_cancelBookingById_confirmed_cancelsSuccessfully() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
-				.departureTime(java.time.LocalDateTime.now().plusDays(2))
-				.numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0)).status(BookingStatus.CONFIRMED).build();
+				.departureTime(java.time.LocalDateTime.now().plusDays(2)).numberOfSeats(1)
+				.totalPrice(BigDecimal.valueOf(4500.0)).seatClass(SeatClass.ECONOMY).status(BookingStatus.CONFIRMED)
+				.build();
 
 		Payment payment = Payment.builder().paymentStatus(PaymentStatus.SUCCESS).build();
 		booking.setPayment(payment);
 
 		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
-		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt());
+		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		CancelBookingResponse response = bookingService.cancelBookingById(1L, "USER-001");
 
 		assertEquals(BookingStatus.CANCELLED, response.getStatus());
 		assertEquals("FLY1234567", response.getBookingReference());
 		assertNotNull(response.getCancelledAt());
-		verify(flightServiceClient, times(1)).restoreSeats(1L, 1);
+		verify(flightServiceClient, times(1)).restoreSeats(1L, 1, SeatClass.ECONOMY);
 	}
 
 	@Test
@@ -391,8 +389,7 @@ public class BookingServiceImplementationTest {
 	@DisplayName("cancelBookingById: should throw UnauthorizedBookingAccessException when user does not own booking")
 	void test_cancelBookingById_wrongUser_throwsUnauthorized() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
-				.departureTime(java.time.LocalDateTime.now().plusDays(2))
-				.status(BookingStatus.CONFIRMED).build();
+				.departureTime(LocalDateTime.now().plusDays(2)).status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -403,8 +400,7 @@ public class BookingServiceImplementationTest {
 	@DisplayName("cancelBookingById: should throw BookingAlreadyCancelledException when already cancelled")
 	void test_cancelBookingById_alreadyCancelled_throwsException() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
-				.departureTime(java.time.LocalDateTime.now().plusDays(2))
-				.status(BookingStatus.CANCELLED).build();
+				.departureTime(LocalDateTime.now().plusDays(2)).status(BookingStatus.CANCELLED).build();
 
 		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -412,16 +408,16 @@ public class BookingServiceImplementationTest {
 	}
 
 	@Test
-	@DisplayName("cancelBookingById: should still cancel when restorSats fails")
+	@DisplayName("cancelBookingById: should still cancel when restorSeats fails")
 	void test_cancelBookingById_restoreSeatsFailure_stillCancels() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
-				.departureTime(java.time.LocalDateTime.now().plusDays(2))
-				.numberOfSeats(1).status(BookingStatus.CONFIRMED).build();
+				.departureTime(java.time.LocalDateTime.now().plusDays(2)).numberOfSeats(1).seatClass(SeatClass.ECONOMY)
+				.status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
-		doThrow(new FlightServiceUnavailableException("unavailable")).when(flightServiceClient).restoreSeats(anyLong(),
-				anyInt());
+		doThrow(new RuntimeException("Service Down")).when(flightServiceClient).restoreSeats(anyLong(), anyInt(),
+				any());
 
 		CancelBookingResponse response = bookingService.cancelBookingById(1L, "USER-001");
 
@@ -467,13 +463,14 @@ public class BookingServiceImplementationTest {
 	@DisplayName("cancelBooking: should cancel using PNR reference")
 	void test_cancelBooking_byPnr_success() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
-				.departureTime(java.time.LocalDateTime.now().plusDays(2))
-				.numberOfSeats(1).status(BookingStatus.CONFIRMED).build();
+				.departureTime(LocalDateTime.now().plusDays(2)).numberOfSeats(1).seatClass(SeatClass.ECONOMY)
+				.status(BookingStatus.CONFIRMED).build();
 		Payment payment = Payment.builder().paymentStatus(PaymentStatus.SUCCESS).build();
 		booking.setPayment(payment);
 
 		when(bookingRepository.findByBookingReference("FLY1234567")).thenReturn(Optional.of(booking));
 		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
 
 		CancelBookingResponse response = bookingService.cancelBooking("FLY1234567", "USER-001");
 		assertEquals(BookingStatus.CANCELLED, response.getStatus());
@@ -483,12 +480,29 @@ public class BookingServiceImplementationTest {
 	@DisplayName("cancelBookingById: should throw CancellationNotAllowedException if within 24h of departure")
 	void test_cancelBookingById_within24Hours_throwsException() {
 		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001")
-				.departureTime(java.time.LocalDateTime.now().plusHours(12)) // Within 24 hours
-				.status(BookingStatus.CONFIRMED).build();
+				.departureTime(LocalDateTime.now().plusHours(12)).status(BookingStatus.CONFIRMED).build();
 
 		when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
-		assertThrows(com.flightapp.booking.exception.CancellationNotAllowedException.class, 
+		assertThrows(com.flightapp.booking.exception.CancellationNotAllowedException.class,
 				() -> bookingService.cancelBookingById(1L, "USER-001"));
+	}
+
+	@Test
+	@DisplayName("createBooking: business class pricing multiplier check")
+	void test_createBooking_businessMultiplier() {
+		validRequest.setSeatClass("BUSINESS");
+		when(flightServiceClient.getFlightById(1L)).thenReturn(activeFlight);
+		doNothing().when(flightServiceClient).reduceSeats(1L, 1, SeatClass.BUSINESS);
+
+		BigDecimal expectedPrice = BigDecimal.valueOf(6750.0);
+		Booking savedBooking = Booking.builder().bookingId(1L).totalPrice(expectedPrice).status(BookingStatus.CONFIRMED)
+				.build();
+		when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+
+		bookingService.createBooking(1L, validRequest);
+
+		verify(bookingRepository).save(org.mockito.ArgumentMatchers.argThat(
+				b -> b.getTotalPrice().compareTo(expectedPrice) == 0 && b.getSeatClass() == SeatClass.BUSINESS));
 	}
 }
