@@ -21,8 +21,8 @@ function AdminPage() {
   const [flightForm, setFlightForm] = useState({
     flightNumber: "",
     airlineId: "",
-    from: "",
-    to: "",
+    fromPlace: "",
+    toPlace: "",
     departureTime: "",
     arrivalTime: "",
     economySeats: "",
@@ -105,8 +105,8 @@ function AdminPage() {
     if (
       !flightForm.flightNumber ||
       !flightForm.airlineId ||
-      !flightForm.from ||
-      !flightForm.to ||
+      !flightForm.fromPlace ||
+      !flightForm.toPlace ||
       !flightForm.departureTime ||
       !flightForm.arrivalTime ||
       !flightForm.economySeats ||
@@ -126,12 +126,13 @@ function AdminPage() {
         departureTime: flightForm.departureTime + ":00",
         arrivalTime: flightForm.arrivalTime + ":00",
       };
+       console.log("Add flight request:", request);
       await addFlight(request);
       setFlightForm({
         flightNumber: "",
         airlineId: "",
-        from: "",
-        to: "",
+        fromPlace: "",
+        toPlace: "",
         departureTime: "",
         arrivalTime: "",
         economySeats: "",
@@ -180,16 +181,16 @@ function AdminPage() {
               style={styles.input}
             />
             <input
-              name="from"
+              name="fromPlace"
               placeholder="From"
-              value={flightForm.from}
+              value={flightForm.fromPlace}
               onChange={handleFlightChange}
               style={styles.input}
             />
             <input
-              name="to"
+              name="toPlace"
               placeholder="To"
-              value={flightForm.to}
+              value={flightForm.toPlace}
               onChange={handleFlightChange}
               style={styles.input}
             />
