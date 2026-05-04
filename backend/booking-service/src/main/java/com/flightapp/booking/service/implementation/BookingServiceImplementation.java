@@ -48,21 +48,21 @@ public class BookingServiceImplementation implements BookingService {
 
 	@Override
 	@Transactional
-	public Long createBooking(CreateBookingRequest request) {
-		log.info("Creating booking — userId: {} flightId: {}", request.getUserId(), request.getFlightId());
+	public Long createBooking(Long flightId, CreateBookingRequest request) {
+		log.info("Creating booking — userId: {} flightId: {}", request.getUserId(), flightId);
 
-		boolean duplicateExists = bookingRepository.existsByUserIdAndFlightIdAndStatusNot(request.getUserId(),
-				request.getFlightId(), BookingStatus.CANCELLED);
+		boolean duplicateExists = bookingRepository.existsByUserIdAndFlightIdAndStatusNot(request.getUserId(), flightId,
+				BookingStatus.CANCELLED);
 
 		if (duplicateExists) {
-			log.warn("Duplicate booking attempt — userId: {} flightId: {}", request.getUserId(), request.getFlightId());
+			log.warn("Duplicate booking attempt — userId: {} flightId: {}", request.getUserId(), flightId);
 			throw new DuplicateBookingException("An active booking already exists for this flight and user");
 		}
 
-		FlightResponse flight = flightServiceClient.getFlightById(request.getFlightId());
+		FlightResponse flight = flightServiceClient.getFlightById(flightId);
 
 		if (!"ACTIVE".equals(flight.getStatus())) {
-			throw new FlightNotActiveException("Flight " + request.getFlightId() + " is not active");
+			throw new FlightNotActiveException("Flight " + flightId + " is not active");
 		}
 
 		int numberOfSeats = request.getPassengers().size();
@@ -75,12 +75,13 @@ public class BookingServiceImplementation implements BookingService {
 		BigDecimal totalPrice = flight.getTicketCost().multiply(BigDecimal.valueOf(numberOfSeats));
 
 		Booking booking = Booking.builder().bookingReference(generateBookingReference()).userId(request.getUserId())
-				.flightId(request.getFlightId()).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
-				.status(BookingStatus.PENDING).build();
+				.flightId(flightId).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
+				.departureTime(flight.getDepartureTime()).status(BookingStatus.PENDING).build();
 
 		request.getPassengers().forEach(p -> {
 			BookingPassenger passenger = BookingPassenger.builder().firstName(p.getFirstName())
-					.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).dateOfBirth(p.getDateOfBirth())
+					.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).gender(p.getGender())
+					.age(p.getAge()).dateOfBirth(p.getDateOfBirth())
 					.mealPreference(parseMealPreference(p.getMealPreference())).build();
 			booking.addPassenger(passenger);
 		});
@@ -94,7 +95,7 @@ public class BookingServiceImplementation implements BookingService {
 		log.info("Booking persisted — ref: {} status: PENDING", saved.getBookingReference());
 
 		try {
-			flightServiceClient.reduceSeats(request.getFlightId(), numberOfSeats);
+			flightServiceClient.reduceSeats(flightId, numberOfSeats);
 			saved.setStatus(BookingStatus.CONFIRMED);
 			saved.getPayment().setPaymentStatus(PaymentStatus.SUCCESS);
 			saved.getPayment().setPaidAt(LocalDateTime.now());
@@ -126,6 +127,15 @@ public class BookingServiceImplementation implements BookingService {
 
 	@Override
 	@Transactional(readOnly = true)
+	public BookingResponse getBookingByBookingReference(String bookingReference) {
+		log.debug("Fetching booking — reference: {}", bookingReference);
+		Booking booking = bookingRepository.findByBookingReference(bookingReference).orElseThrow(
+				() -> new BookingNotFoundException("Booking not found with reference: " + bookingReference));
+		return mapToResponse(booking);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
 	public Page<BookingResponse> getAllBookings(Pageable pageable) {
 		log.debug("Fetching all bookings — page: {}", pageable.getPageNumber());
 		return bookingRepository.findAll(pageable).map(this::mapToResponse);
@@ -133,12 +143,23 @@ public class BookingServiceImplementation implements BookingService {
 
 	@Override
 	@Transactional
-	public CancelBookingResponse cancelBooking(Long bookingId, String userId) {
-		log.info("Cancel request — bookingId: {} userId: {}", bookingId, userId);
+	public CancelBookingResponse cancelBooking(String bookingReference, String userId) {
+		log.info("Cancel request — reference: {} userId: {}", bookingReference, userId);
+		Booking booking = bookingRepository.findByBookingReference(bookingReference).orElseThrow(
+				() -> new BookingNotFoundException("Booking not found with reference: " + bookingReference));
+		return processCancellation(booking, userId);
+	}
 
+	@Override
+	@Transactional
+	public CancelBookingResponse cancelBookingById(Long bookingId, String userId) {
+		log.info("Cancel request — id: {} userId: {}", bookingId, userId);
 		Booking booking = bookingRepository.findById(bookingId)
 				.orElseThrow(() -> new BookingNotFoundException("Booking not found with id: " + bookingId));
+		return processCancellation(booking, userId);
+	}
 
+	private CancelBookingResponse processCancellation(Booking booking, String userId) {
 		if (!booking.getUserId().equals(userId)) {
 			throw new UnauthorizedBookingAccessException("You are not authorized to cancel this booking");
 		}
@@ -146,6 +167,11 @@ public class BookingServiceImplementation implements BookingService {
 		if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
 			throw new BookingAlreadyCancelledException(
 					"Booking " + booking.getBookingReference() + " is already cancelled");
+		}
+
+		if (booking.getDepartureTime().isBefore(LocalDateTime.now().plusHours(24))) {
+			throw new com.flightapp.booking.exception.CancellationNotAllowedException(
+					"Cancellation is only allowed 24 hours prior to flight departure");
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
@@ -168,7 +194,7 @@ public class BookingServiceImplementation implements BookingService {
 	}
 
 	private String generateBookingReference() {
-		return "FLY" + UUID.randomUUID().toString().replace("-", "").substring(0, 7).toUpperCase(); //TODO: change randomUUID with timestamp and userpart
+		return "FLY" + UUID.randomUUID().toString().replace("-", "").substring(0, 7).toUpperCase();   
 	}
 
 	private MealPreference parseMealPreference(String value) {
@@ -182,15 +208,20 @@ public class BookingServiceImplementation implements BookingService {
 	}
 
 	private BookingResponse mapToResponse(Booking booking) {
-		List<PassengerResponse> passengers = booking.getPassengers().stream()
-				.map(p -> PassengerResponse.builder().passengerId(p.getPassengerId()).firstName(p.getFirstName())
-						.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).dateOfBirth(p.getDateOfBirth())
-						.mealPreference(p.getMealPreference().name()).build())
+		List<PassengerResponse> passengers = booking.getPassengers().stream().map(this::mapToPassengerResponse)
 				.toList();
 
-		return BookingResponse.builder().bookingId(booking.getBookingId()).bookingReference(booking.getBookingReference())
-				.flightId(booking.getFlightId()).userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())
-				.totalPrice(booking.getTotalPrice()).status(booking.getStatus()).bookingTime(booking.getBookingTime())
-				.passengers(passengers).build();
+		return BookingResponse.builder().bookingId(booking.getBookingId())
+				.bookingReference(booking.getBookingReference()).flightId(booking.getFlightId())
+				.userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())
+				.departureTime(booking.getDepartureTime()).totalPrice(booking.getTotalPrice())
+				.status(booking.getStatus()).bookingTime(booking.getBookingTime()).passengers(passengers).build();
+	}
+
+	private PassengerResponse mapToPassengerResponse(BookingPassenger p) {
+		return PassengerResponse.builder().passengerId(p.getPassengerId()).firstName(p.getFirstName())
+				.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).gender(p.getGender()).age(p.getAge())
+				.dateOfBirth(p.getDateOfBirth())
+				.mealPreference(p.getMealPreference() != null ? p.getMealPreference().name() : null).build();
 	}
 }

@@ -46,6 +46,12 @@ public class BookingPassenger {
 
 	@Column(name = "passport_number", length = 20)
 	private String passportNumber;
+	
+	@Column(name="gender", length = 10)
+	private String gender;
+	
+	@Column(name="age")
+	private Integer age;
 
 	@Column(name = "date_of_birth")
 	private LocalDate dateOfBirth;

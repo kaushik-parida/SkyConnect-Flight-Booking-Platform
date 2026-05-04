@@ -7,9 +7,9 @@
       "airlineId": 101,
       "fromPlace": "Mumbai",
       "toPlace": "Delhi",
-      "departureTime": "2026-05-01T06:00:00",
-      "arrivalTime": "2026-05-01T08:10:00",
-      "economySeats": 174,
+      "departureTime": "2026-05-10T06:00:00",
+      "arrivalTime": "2026-05-10T08:10:00",
+      "economySeats": 160,
       "businessSeats": 0,
       "ticketCost": 4500,
       "status": "ACTIVE"
@@ -41,6 +41,37 @@
       "businessSeats": 0,
       "ticketCost": 2800,
       "status": "ACTIVE"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "1",
+      "bookingId": 1,
+      "bookingReference": "FLY1234567",
+      "userId": "USER-001",
+      "flightId": 1,
+      "numberOfSeats": 1,
+      "totalPrice": 4500,
+      "status": "CONFIRMED",
+      "bookingTime": "2026-05-10T10:00:00",
+      "departureTime": "2026-05-15T06:00:00",
+      "payment": {
+        "paymentId": 101,
+        "paymentMethod": "UPI",
+        "paymentStatus": "SUCCESS"
+      },
+      "passengers": [
+        {
+          "passengerId": 1001,
+          "firstName": "Rahul",
+          "lastName": "Sharma",
+          "passportNumber": "P1234567",
+          "gender": "M",
+          "age": 30,
+          "dateOfBirth": "1995-06-15",
+          "mealPreference": "VEGETARIAN"
+        }
+      ]
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

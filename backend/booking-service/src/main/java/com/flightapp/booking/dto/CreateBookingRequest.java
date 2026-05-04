@@ -11,9 +11,6 @@ import lombok.Data;
 @Data
 public class CreateBookingRequest {
 
-	@NotNull(message = "Flight ID is required")
-	private Long flightId;
-
 	@NotBlank(message = "User ID is required")
 	private String userId;
 

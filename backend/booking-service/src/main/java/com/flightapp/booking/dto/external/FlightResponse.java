@@ -1,6 +1,9 @@
 package com.flightapp.booking.dto.external;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
 
@@ -12,8 +15,13 @@ public class FlightResponse {
 	private Long airlineId;
 	private String fromPlace;
 	private String toPlace;
-	private String departureTime;
-	private String arrivalTime;
+
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+	private LocalDateTime departureTime;
+
+	@JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+	private LocalDateTime arrivalTime;
+
 	private Integer economySeats;
 	private Integer businessSeats;
 	private BigDecimal ticketCost;
