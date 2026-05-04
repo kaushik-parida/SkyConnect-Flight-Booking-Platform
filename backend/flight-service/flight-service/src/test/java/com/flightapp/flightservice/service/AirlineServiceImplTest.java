@@ -39,10 +39,8 @@ public class AirlineServiceImplTest {
 	void CreateAirline() {
 		AirlineRequest request = new AirlineRequest();
 		request.setName("Indigo");
-		request.setLogoUrl("logo.png");
 
-		Airline savedAirline = Airline.builder().airlineId(1L).name("Indigo").logoUrl("logo.png")
-				.status(AirlineStatus.ACTIVE).build();
+		Airline savedAirline = Airline.builder().airlineId(1L).name("Indigo").status(AirlineStatus.ACTIVE).build();
 
 		when(airlineRepository.save(any(Airline.class))).thenReturn(savedAirline);
 		Long result = airlineService.createAirline(request);
@@ -54,8 +52,6 @@ public class AirlineServiceImplTest {
 	void CreateAirlineWithEmptyName() {
 		AirlineRequest request = new AirlineRequest();
 		request.setName("");
-		request.setLogoUrl("logo.png");
-
 		Exception exception = assertThrows(Exception.class, () -> {
 			airlineService.createAirline(request);
 		});

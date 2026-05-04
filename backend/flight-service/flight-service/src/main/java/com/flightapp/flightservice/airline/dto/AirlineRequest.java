@@ -9,5 +9,4 @@ public class AirlineRequest {
 	@NotBlank
 	private String name;
 
-	private String logoUrl;
 }

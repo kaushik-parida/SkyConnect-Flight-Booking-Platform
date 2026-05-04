@@ -35,8 +35,6 @@ public class Airline {
 	@Column(nullable = false)
 	private String name;
 
-	private String logoUrl;
-
 	@Enumerated(EnumType.STRING)
 	private AirlineStatus status;
 
