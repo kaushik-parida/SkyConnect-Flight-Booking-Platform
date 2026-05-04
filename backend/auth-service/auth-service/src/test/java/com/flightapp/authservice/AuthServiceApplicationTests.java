@@ -46,7 +46,6 @@ class AuthServiceApplicationTests {
 
 	@Test
 	void testRegisterSuccess() {
-
 		SignupRequest request = new SignupRequest();
 		request.setFullName("Test User");
 		request.setEmail("test@gmail.com");
@@ -70,8 +69,85 @@ class AuthServiceApplicationTests {
 	}
 
 	@Test
-	void testLoginSuccess() {
+	void testRegisterDuplicateEmail() {
+		SignupRequest request = new SignupRequest();
+		request.setEmail("test@gmail.com");
 
+		when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
+
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.register(request);
+		});
+
+		assertEquals("Email already registered", ex.getMessage());
+	}
+
+	@Test
+	void testRegisterInvalidGender() {
+		SignupRequest request = new SignupRequest();
+		request.setEmail("test@gmail.com");
+		request.setPassword("12345");
+		request.setGender("INVALID");
+
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.register(request);
+		});
+
+		assertNotNull(ex);
+	}
+
+	@Test
+	void testRegisterEmptyEmail() {
+		SignupRequest request = new SignupRequest();
+		request.setEmail("");
+
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.register(request);
+		});
+
+		assertNotNull(ex);
+	}
+
+	@Test
+	void testRegisterNullPassword() {
+		SignupRequest request = new SignupRequest();
+		request.setEmail("test@gmail.com");
+		request.setPassword(null);
+
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.register(request);
+		});
+
+		assertNotNull(ex);
+	}
+
+	@Test
+	void testUserSavedInRepository() {
+		SignupRequest request = new SignupRequest();
+		request.setFullName("Test User");
+		request.setEmail("test@gmail.com");
+		request.setPassword("12345");
+		request.setPhoneNumber("9876543210");
+		request.setGender("MALE");
+		request.setDateOfBirth("2000-01-01");
+
+		when(userRepository.existsByEmail(anyString())).thenReturn(false);
+		when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+
+		User savedUser = User.builder().id(UUID.randomUUID()).email("test@gmail.com").password("encoded")
+				.role(Role.USER).build();
+
+		when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+		CommonResponse<SignupResponse> response = authService.register(request);
+
+		assertNotNull(response);
+		assertTrue(response.isSuccess());
+		assertNotNull(response.getData());
+	}
+
+	@Test
+	void testLoginSuccess() {
 		LoginRequest request = new LoginRequest();
 		request.setUsernameOrEmail("test@gmail.com");
 		request.setPassword("12345");
@@ -80,9 +156,7 @@ class AuthServiceApplicationTests {
 				.build();
 
 		when(userRepository.findByEmail(request.getUsernameOrEmail())).thenReturn(Optional.of(user));
-
 		when(passwordEncoder.matches(request.getPassword(), user.getPassword())).thenReturn(true);
-
 		when(jwtUtil.generateToken(user)).thenReturn("mockToken");
 
 		CommonResponse<LoginResponse> response = authService.login(request);
@@ -92,23 +166,7 @@ class AuthServiceApplicationTests {
 	}
 
 	@Test
-	void testRegisterDuplicateEmail() {
-
-		SignupRequest request = new SignupRequest();
-		request.setEmail("test@gmail.com");
-
-		when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
-
-		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-			authService.register(request);
-		});
-
-		assertEquals("Email already registered", exception.getMessage());
-	}
-
-	@Test
 	void testLoginInvalidPassword() {
-
 		LoginRequest request = new LoginRequest();
 		request.setUsernameOrEmail("test@gmail.com");
 		request.setPassword("wrongpass");
@@ -117,50 +175,73 @@ class AuthServiceApplicationTests {
 				.build();
 
 		when(userRepository.findByEmail(request.getUsernameOrEmail())).thenReturn(Optional.of(user));
-
 		when(passwordEncoder.matches(request.getPassword(), user.getPassword())).thenReturn(false);
 
-		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
 			authService.login(request);
 		});
 
-		assertEquals("Invalid password", exception.getMessage());
+		assertEquals("Invalid password", ex.getMessage());
 	}
 
 	@Test
 	void testLoginUserNotFound() {
-
 		LoginRequest request = new LoginRequest();
 		request.setUsernameOrEmail("notfound@gmail.com");
 
 		when(userRepository.findByEmail(request.getUsernameOrEmail())).thenReturn(Optional.empty());
 
-		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
 			authService.login(request);
 		});
 
-		assertEquals("User not found", exception.getMessage());
+		assertEquals("User not found", ex.getMessage());
 	}
 
 	@Test
-	void testRegisterInvalidGender() {
+	void testLoginEmptyEmail() {
+		LoginRequest request = new LoginRequest();
+		request.setUsernameOrEmail("");
 
-		SignupRequest request = new SignupRequest();
-		request.setFullName("Test");
-		request.setEmail("test@gmail.com");
-		request.setPassword("12345");
-		request.setGender("INVALID");
-
-		RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-			authService.register(request);
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.login(request);
 		});
 
-		assertNotNull(exception);
+		assertNotNull(ex);
+	}
+
+	@Test
+	void testLoginNullPassword() {
+		LoginRequest request = new LoginRequest();
+		request.setUsernameOrEmail("test@gmail.com");
+		request.setPassword(null);
+
+		RuntimeException ex = assertThrows(RuntimeException.class, () -> {
+			authService.login(request);
+		});
+
+		assertNotNull(ex);
+	}
+
+	@Test
+	void testLoginTokenNotNull() {
+		LoginRequest request = new LoginRequest();
+		request.setUsernameOrEmail("test@gmail.com");
+		request.setPassword("12345");
+
+		User user = User.builder().email("test@gmail.com").password("encodedPass").role(Role.USER).build();
+
+		when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+		when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+		when(jwtUtil.generateToken(user)).thenReturn("token");
+
+		CommonResponse<LoginResponse> response = authService.login(request);
+
+		assertNotNull(response.getData().getToken());
 	}
 
 	@Test
 	void testJwtTokenGeneration() {
-
 		User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").role(Role.USER).build();
 
 		when(jwtUtil.generateToken(user)).thenReturn("mockToken");
@@ -170,4 +251,5 @@ class AuthServiceApplicationTests {
 		assertNotNull(token);
 		assertEquals("mockToken", token);
 	}
+
 }
