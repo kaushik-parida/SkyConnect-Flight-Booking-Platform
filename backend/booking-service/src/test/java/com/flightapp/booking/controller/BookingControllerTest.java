@@ -58,7 +58,6 @@ public class BookingControllerTest {
 		passenger.setMealPreference("VEGETARIAN");
 
 		CreateBookingRequest request = new CreateBookingRequest();
-		request.setFlightId(1L);
 		request.setUserId("USER-001");
 		request.setPaymentMethod("UPI");
 		request.setPassengers(List.of(passenger));
@@ -74,24 +73,14 @@ public class BookingControllerTest {
 	@Test
 	@DisplayName("POST /booking: should return 201 Created with booking response")
 	void test_createBooking_validRequest_returns201() throws Exception {
-		when(bookingService.createBooking(any(CreateBookingRequest.class))).thenReturn(1L);
+		when(bookingService.createBooking(eq(1L), any(CreateBookingRequest.class))).thenReturn(1L);
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flight/booking/1").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isCreated())
 				.andExpect(jsonPath("$").value(1));
 	}
 
-	@Test
-	@DisplayName("POST /booking: should return 400 when flightId is missing")
-	void test_createBooking_missingFlightId_returns400() throws Exception {
-		CreateBookingRequest request = buildValidRequest();
-		request.setFlightId(null);
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.status").value(400))
-				.andExpect(jsonPath("$.message").value("flightId: Flight ID is required"));
-	}
 
 	@Test
 	@DisplayName("POST /booking: should return 400 when passengers list is missing")
@@ -99,7 +88,7 @@ public class BookingControllerTest {
 		CreateBookingRequest request = buildValidRequest();
 		request.setPassengers(null);
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flight/booking/1").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request))).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.status").value(400))
 				.andExpect(jsonPath("$.message").value("passengers: Passenger details are required"));
@@ -108,10 +97,10 @@ public class BookingControllerTest {
 	@Test
 	@DisplayName("POST /booking: should return 409 when seats are insufficient")
 	void test_createBooking_insufficientSeats_returns409() throws Exception {
-		when(bookingService.createBooking(any(CreateBookingRequest.class)))
+		when(bookingService.createBooking(eq(1L), any(CreateBookingRequest.class)))
 				.thenThrow(new InsufficientSeatsException("Only 0 seats available"));
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flight/booking/1").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isConflict())
 				.andExpect(jsonPath("$.status").value(409))
 				.andExpect(jsonPath("$.message").value("Only 0 seats available"));
@@ -120,10 +109,10 @@ public class BookingControllerTest {
 	@Test
 	@DisplayName("POST /booking: should return 503 when flight service is unavailable")
 	void test_createBooking_flightServiceUnavailable_returns503() throws Exception {
-		when(bookingService.createBooking(any(CreateBookingRequest.class)))
+		when(bookingService.createBooking(eq(1L), any(CreateBookingRequest.class)))
 				.thenThrow(new FlightServiceUnavailableException("Flight Service is currently unavailable"));
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flight/booking/1").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(buildValidRequest())))
 				.andExpect(status().isServiceUnavailable()).andExpect(jsonPath("$.status").value(503))
 				.andExpect(jsonPath("$.message").value("Flight Service is currently unavailable"));
@@ -132,10 +121,10 @@ public class BookingControllerTest {
 	@Test
 	@DisplayName("POST /booking: should return 400 when flight is not active")
 	void test_createBooking_flightNotActive_returns400() throws Exception {
-		when(bookingService.createBooking(any(CreateBookingRequest.class)))
+		when(bookingService.createBooking(eq(1L), any(CreateBookingRequest.class)))
 				.thenThrow(new FlightNotActiveException("Flight 1 is not active"));
 
-		mockMvc.perform(post("/api/v1.0/flight/booking").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flight/booking/1").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(buildValidRequest()))).andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.status").value(400))
 				.andExpect(jsonPath("$.message").value("Flight 1 is not active"));
@@ -164,50 +153,71 @@ public class BookingControllerTest {
 	}
 
 	@Test
-	@DisplayName("GET /booking/user/{userId}: should return 200 with paged bookings")
-	void test_getBookingsByUserId_returns200() throws Exception {
+	@DisplayName("GET /history/{userId}: should return 200 with paged bookings")
+	void test_getBookingByUserId_returns200() throws Exception {
 		BookingResponse booking = buildBookingResponse();
 		Page<BookingResponse> page = new PageImpl<>(List.of(booking));
 
 		when(bookingService.getBookingsByUserId(eq("USER-001"), any(Pageable.class))).thenReturn(page);
 
-		mockMvc.perform(get("/api/v1.0/flight/booking/user/USER-001")).andExpect(status().isOk())
+		mockMvc.perform(get("/api/v1.0/flight/booking/history/USER-001")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.totalElements").value(1))
 				.andExpect(jsonPath("$.content[0].userId").value("USER-001"));
 	}
 
 	@Test
-	@DisplayName("PATCH /booking/{id}/cancel: should return 200 on successful cancellation")
+	@DisplayName("PATCH /cancel/{pnr}: should return 200 on successful cancellation")
 	void test_cancelBooking_returns200() throws Exception {
 		CancelBookingResponse cancelResponse = CancelBookingResponse.builder().bookingId(1L)
 				.bookingReference("FLY1234567").status(BookingStatus.CANCELLED)
-				.message("Booking cancelled successfully. Refund will be processed in 5-7 business days.")
+				.message("Booking cancelled successfully")
 				.cancelledAt(LocalDateTime.now()).build();
 
-		when(bookingService.cancelBooking(1L, "USER-001")).thenReturn(cancelResponse);
+		when(bookingService.cancelBooking("FLY1234567", "USER-001")).thenReturn(cancelResponse);
 
-		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-001"))
+		mockMvc.perform(patch("/api/v1.0/flight/booking/cancel/FLY1234567").param("userId", "USER-001"))
 				.andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"))
 				.andExpect(jsonPath("$.bookingReference").value("FLY1234567"));
 	}
 
 	@Test
-	@DisplayName("PATCH /booking/{id}/cancel: should return 403 when unauthorized")
-	void test_cancelBooking_unauthorized_returns403() throws Exception {
-		when(bookingService.cancelBooking(1L, "USER-999"))
+	@DisplayName("PATCH /cancel/id/{id}: should return 403 when unauthorized")
+	void test_cancelBookingById_unauthorized_returns403() throws Exception {
+		when(bookingService.cancelBookingById(1L, "USER-999"))
 				.thenThrow(new UnauthorizedBookingAccessException("You are not authorized to cancel this booking"));
 
-		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-999"))
+		mockMvc.perform(patch("/api/v1.0/flight/booking/cancel/id/1").param("userId", "USER-999"))
 				.andExpect(status().isForbidden()).andExpect(jsonPath("$.status").value(403));
 	}
 
 	@Test
-	@DisplayName("PATCH /booking/{id}/cancel: should return 400 when already cancelled")
-	void test_cancelBooking_alreadyCancelled_returns400() throws Exception {
-		when(bookingService.cancelBooking(1L, "USER-001"))
+	@DisplayName("PATCH /cancel/id/{id}: should return 400 when already cancelled")
+	void test_cancelBookingById_alreadyCancelled_returns400() throws Exception {
+		when(bookingService.cancelBookingById(1L, "USER-001"))
 				.thenThrow(new BookingAlreadyCancelledException("Booking FLY1234567 is already cancelled"));
 
-		mockMvc.perform(patch("/api/v1.0/flight/booking/1/cancel").param("userId", "USER-001"))
+		mockMvc.perform(patch("/api/v1.0/flight/booking/cancel/id/1").param("userId", "USER-001"))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value(400));
+	}
+
+	@Test
+	@DisplayName("GET /ticket/{pnr}: should return 200 with booking details")
+	void test_getTicketByPnr_returns200() throws Exception {
+		BookingResponse response = buildBookingResponse();
+		when(bookingService.getBookingByBookingReference("FLY1234567")).thenReturn(response);
+
+		mockMvc.perform(get("/api/v1.0/flight/booking/ticket/FLY1234567")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.bookingReference").value("FLY1234567"));
+	}
+
+	@Test
+	@DisplayName("GET /admin/all: should return 200 with all bookings")
+	void test_getAllBookings_returns200() throws Exception {
+		BookingResponse booking = buildBookingResponse();
+		Page<BookingResponse> page = new PageImpl<>(List.of(booking));
+		when(bookingService.getAllBookings(any(Pageable.class))).thenReturn(page);
+
+		mockMvc.perform(get("/api/v1.0/flight/booking/admin/all")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElements").value(1));
 	}
 }

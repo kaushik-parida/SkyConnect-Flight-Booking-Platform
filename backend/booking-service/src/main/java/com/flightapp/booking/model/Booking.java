@@ -55,6 +55,9 @@ public class Booking {
 
 	@Column(name = "number_of_seats", nullable = false)
 	private Integer numberOfSeats;
+	
+	@Column(name = "departure_time", nullable = false)
+	private LocalDateTime departureTime;
 
 	@Column(name = "total_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal totalPrice;

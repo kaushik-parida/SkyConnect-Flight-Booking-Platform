@@ -15,9 +15,9 @@ public class PassengerRequest {
 	private String lastName;
 
 	private String passportNumber;
-
+	private String gender;
+	private Integer age;
 	private LocalDate dateOfBirth;
-
 	private String mealPreference;
 
 }

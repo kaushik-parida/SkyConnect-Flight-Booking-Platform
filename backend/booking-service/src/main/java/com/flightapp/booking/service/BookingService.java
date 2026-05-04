@@ -8,13 +8,17 @@ import com.flightapp.booking.dto.CancelBookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
 
 public interface BookingService {
-	Long createBooking(CreateBookingRequest request);
+	Long createBooking(Long flightId, CreateBookingRequest request);
 
 	BookingResponse getBookingById(Long bookingId);
 
 	Page<BookingResponse> getBookingsByUserId(String userId, Pageable pageable);
+	
+	BookingResponse getBookingByBookingReference(String bookingReference);
 
 	Page<BookingResponse> getAllBookings(Pageable pageable);
+	
+	CancelBookingResponse cancelBooking(String bookingReference, String userId);
 
-	CancelBookingResponse cancelBooking(Long bookingId, String userId);
+	CancelBookingResponse cancelBookingById(Long bookingId, String userId);
 }

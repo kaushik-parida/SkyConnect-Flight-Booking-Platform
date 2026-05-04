@@ -18,6 +18,7 @@ public class BookingResponse {
 	private Long flightId;
 	private String userId;
 	private Integer numberOfSeats;
+	private LocalDateTime departureTime;
 	private BigDecimal totalPrice;
 	private BookingStatus status;
 	private LocalDateTime bookingTime;

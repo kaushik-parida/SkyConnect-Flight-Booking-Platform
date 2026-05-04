@@ -32,7 +32,7 @@ public class FlightServiceClient {
 			log.error("Flight not found with id: {}", flightId);
 			throw new FlightNotFoundException("Flight not found with id: " + flightId);
 		} catch (Exception e) {
-			log.error("Flight Service unavailable: {}", e.getMessage());
+			log.error("Flight Service unavailable: {}", e.getMessage(), e);
 			throw new FlightServiceUnavailableException("Flight Service is currently unavailable");
 		}
 	}

@@ -13,6 +13,8 @@ public class PassengerResponse {
 	private String firstName;
 	private String lastName;
 	private String passportNumber;
+	private String gender;
+	private Integer age;
 	private LocalDate dateOfBirth;
 	private String mealPreference;
 }
