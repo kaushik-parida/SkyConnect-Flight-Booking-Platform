@@ -29,10 +29,10 @@ public class FlightCreateRequest {
     private Long airlineId;
     @NotBlank()
     @Size(max = 80)
-    private String from;
+    private String fromPlace;
     @NotBlank()
     @Size(max=80)
-    private String to;
+    private String toPlace;
     @NotNull()
     @JsonFormat(pattern = AppConstants.DATE_TIME_FORMAT)
     private LocalDateTime departureTime;

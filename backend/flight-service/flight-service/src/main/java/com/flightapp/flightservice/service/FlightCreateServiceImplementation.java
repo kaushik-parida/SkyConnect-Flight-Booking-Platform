@@ -25,8 +25,8 @@ public class FlightCreateServiceImplementation implements FlightCreateService{
         Flight flight =Flight.builder()
                 .flightNumber(request.getFlightNumber().trim())
                 .airlineId(request.getAirlineId())
-                .fromPlace(request.getFrom().trim())
-                .toPlace(request.getTo().trim())
+                .fromPlace(request.getFromPlace().trim())
+                .toPlace(request.getToPlace().trim())
                 .departureTime(request.getDepartureTime())
                 .arrivalTime(request.getArrivalTime())
                 .economySeats(request.getEconomySeats())
@@ -39,9 +39,9 @@ public class FlightCreateServiceImplementation implements FlightCreateService{
         return savedFlight.getFlightId();
     }
     private void validateCreateRequest(FlightCreateRequest request){
-        validatePlace(request.getFrom()); 
-        validatePlace(request.getTo());
-        if (request.getFrom().trim().equalsIgnoreCase(request.getTo().trim())) {
+        validatePlace(request.getFromPlace()); 
+        validatePlace(request.getToPlace());
+        if (request.getFromPlace().trim().equalsIgnoreCase(request.getToPlace().trim())) {
             throw new IllegalArgumentException("Source and destination cannot be the same");
         }
         if (!request.getArrivalTime().isAfter(request.getDepartureTime())) {

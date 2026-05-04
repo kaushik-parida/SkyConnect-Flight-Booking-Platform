@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class FlightServiceClient {
 
-	private static final String FLIGHT_BY_ID_URI = "/flights/{id}";
+	private static final String FLIGHT_BY_ID_URI = "/api/v1.0/flights/{id}";
 	private final WebClient webClient;
 
 	public FlightServiceClient(WebClient webClient) {
