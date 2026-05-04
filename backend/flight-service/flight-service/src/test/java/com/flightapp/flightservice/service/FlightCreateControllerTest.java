@@ -36,6 +36,8 @@ class FlightCreateControllerTest {
 	private FlightCreateService flightCreateService;
 	@MockitoBean
 	private InventoryService inventoryService;
+	@MockitoBean
+	private FlightSearchService flightSearchService;
 
 	@Test
 	void createFlight_shouldReturnCreated_whenAdmin() throws Exception {
@@ -59,7 +61,7 @@ class FlightCreateControllerTest {
 	}
 
 	private FlightCreateRequest validRequest() {
-		return FlightCreateRequest.builder().flightNumber("AI301").airlineId(1L).from("Bangalore").to("Delhi")
+		return FlightCreateRequest.builder().flightNumber("AI301").airlineId(1L).fromPlace("Bangalore").toPlace("Delhi")
 				.departureTime(LocalDateTime.of(2026, 6, 10, 10, 0)).arrivalTime(LocalDateTime.of(2026, 6, 10, 12, 30))
 				.economySeats(100).businessSeats(20).ticketCost(BigDecimal.valueOf(5000)).mealType(MealType.VEG)
 				.build();
