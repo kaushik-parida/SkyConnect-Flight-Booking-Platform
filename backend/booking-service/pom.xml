@@ -43,7 +43,9 @@
 			**/exception/*Exception.java,
 			**/BookingServiceApplication.java,
 			**/config/AppConfig.java,
-			**/config/OpenApiConfig.java
+			**/config/OpenApiConfig.java,
+			**/config/SecurityConfig.java,
+			**/config/GatewayHeaderFile.java
 		</sonar.exclusions>
 		<sonar.coverage.exclusions>
 			**/model/**,
@@ -51,7 +53,9 @@
 			**/exception/*Exception.java,
 			**/BookingServiceApplication.java,
 			**/config/AppConfig.java,
-			**/config/OpenApiConfig.java
+			**/config/OpenApiConfig.java,
+			**/config/SecurityConfig.java,
+			**/config/GatewayHeaderFile.java
 		</sonar.coverage.exclusions>
 		<sonar.test.exclusions>
 			**/test/**
@@ -65,7 +69,7 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
@@ -114,6 +118,11 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
@@ -124,7 +133,7 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -300,6 +309,10 @@
 									com/flightapp/booking/config/AppConfig.class</exclude>
 								<exclude>
 									com/flightapp/booking/config/OpenApiConfig.class</exclude>
+								<exclude>
+									com/flightapp/booking/config/SecurityConfig.class</exclude>
+								<exclude>
+									com/flightapp/booking/config/GatewayHeaderFilter.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>

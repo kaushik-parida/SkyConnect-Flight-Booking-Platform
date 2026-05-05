@@ -110,7 +110,7 @@ public class BookingServiceImplementation implements BookingService {
 			saved.getPayment().setPaidAt(LocalDateTime.now());
 			bookingRepository.save(saved);
 			log.info("Booking confirmed — ref: {}", saved.getBookingReference());
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			log.warn("Seat reduction failed — booking stays PENDING ref: {} reason: {}", saved.getBookingReference(),
 					e.getMessage());
 		}
@@ -192,7 +192,7 @@ public class BookingServiceImplementation implements BookingService {
 
 		try {
 			flightServiceClient.restoreSeats(booking.getFlightId(), booking.getNumberOfSeats(), booking.getSeatClass());
-		} catch (Exception e) {
+		} catch (RuntimeException e) {
 			log.warn("Seat restoration failed — ref: {} reason: {}", booking.getBookingReference(), e.getMessage());
 		}
 
