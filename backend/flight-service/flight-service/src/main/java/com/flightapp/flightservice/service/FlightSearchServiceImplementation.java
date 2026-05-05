@@ -3,11 +3,14 @@ package com.flightapp.flightservice.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.flightapp.flightservice.airline.model.Inventory;
+import com.flightapp.flightservice.airline.repository.InventoryRepository;
 import com.flightapp.flightservice.dto.FlightResponse;
 import com.flightapp.flightservice.dto.FlightSearchRequest;
 import com.flightapp.flightservice.dto.FlightSearchResultResponse;
@@ -24,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FlightSearchServiceImplementation implements FlightSearchService {
 	private final FlightRepository flightRepository;
+	private final InventoryRepository inventoryRepository;
+
 	@Value("${flight.place.regex}")
 	private String placeRegex;
 	@Value("${flight.place.message}")
@@ -33,20 +38,21 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 	public FlightSearchResultResponse searchFlights(FlightSearchRequest request) {
 		validateCommonSearchRequest(request);
 		TripType tripType = request.getTripType() == null ? TripType.ONE_WAY : request.getTripType();
-		List<FlightResponse> onwardFlights = searchOneRoute(request.getFrom(), request.getTo(),
+		List<FlightResponse> onwardFlights = searchOneRoute(request.getFromPlace(), request.getToPlace(),
 				request.getDepartureDate(), request);
 		List<FlightResponse> returnFlights = List.of();
 		if (tripType == TripType.ROUND_TRIP) {
 			validateRoundTripRequest(request);
-			returnFlights = searchOneRoute(request.getTo(), request.getFrom(), request.getReturnDate(), request);
+			returnFlights = searchOneRoute(request.getToPlace(), request.getFromPlace(), request.getReturnDate(),
+					request);
 		}
 		return FlightSearchResultResponse.builder().onwardFlights(onwardFlights).returnFlights(returnFlights).build();
 	}
 
 	private void validateCommonSearchRequest(FlightSearchRequest request) {
-		validatePlace(request.getFrom());
-		validatePlace(request.getTo());
-		if (request.getFrom().trim().equalsIgnoreCase(request.getTo().trim())) {
+		validatePlace(request.getFromPlace());
+		validatePlace(request.getToPlace());
+		if (request.getFromPlace().trim().equalsIgnoreCase(request.getToPlace().trim())) {
 			throw new IllegalArgumentException("Source and destination cant be the same");
 		}
 		if (request.getDepartureDate().isBefore(LocalDate.now())) {
@@ -61,7 +67,7 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 				.findByFromPlaceIgnoreCaseAndToPlaceIgnoreCaseAndDepartureTimeBetweenAndStatus(from.trim(), to.trim(),
 						start, end, FlightStatus.ACTIVE, getSort(request));
 		if (flights.isEmpty()) {
-			throw new NoFlightsFoundException("Noflights found for given route and date");
+			throw new NoFlightsFoundException("No flights found for given route and date");
 		}
 		return flights.stream().map(this::mapToResponse).toList();
 	}
@@ -83,11 +89,16 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 	}
 
 	private FlightResponse mapToResponse(Flight flight) {
+		Optional<Inventory> inventory = inventoryRepository.findById(flight.getFlightId());
+
+		Integer economySeats = inventory.map(Inventory::getEconomySeats).orElse(flight.getEconomySeats());
+		Integer businessSeats = inventory.map(Inventory::getBusinessSeats).orElse(flight.getBusinessSeats());
+
 		return FlightResponse.builder().flightId(flight.getFlightId()).flightNumber(flight.getFlightNumber())
 				.airlineId(flight.getAirlineId()).fromPlace(flight.getFromPlace()).toPlace(flight.getToPlace())
 				.departureTime(flight.getDepartureTime()).arrivalTime(flight.getArrivalTime())
-				.economySeats(flight.getEconomySeats()).businessSeats(flight.getBusinessSeats())
-				.ticketCost(flight.getTicketCost()).status(flight.getStatus().name()).build();
+				.economySeats(economySeats).businessSeats(businessSeats).ticketCost(flight.getTicketCost())
+				.status(flight.getStatus().name()).build();
 	}
 
 	private void validatePlace(String place) {
@@ -114,5 +125,4 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 				.orElseThrow(() -> new NoFlightsFoundException("Flight not found with id: " + id));
 		return mapToResponse(flight);
 	}
-
 }

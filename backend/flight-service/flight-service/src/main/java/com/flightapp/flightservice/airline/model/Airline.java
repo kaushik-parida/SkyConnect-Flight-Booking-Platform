@@ -34,6 +34,9 @@ public class Airline {
 
 	@Column(nullable = false)
 	private String name;
+	
+	private String contactNumber;
+	private String contactAddress;
 
 	@Enumerated(EnumType.STRING)
 	private AirlineStatus status;

@@ -21,7 +21,8 @@ public class AirlineServiceImpl implements AirlineService {
 
 	@Override
 	public Long createAirline(AirlineRequest request) {
-		Airline airline = Airline.builder().name(request.getName().trim()).status(AirlineStatus.ACTIVE).build();
+		Airline airline = Airline.builder().name(request.getName().trim()).contactNumber(request.getContactNumber())
+				.contactAddress(request.getContactAddress()).status(AirlineStatus.ACTIVE).build();
 
 		return airlineRepository.save(airline).getAirlineId();
 	}

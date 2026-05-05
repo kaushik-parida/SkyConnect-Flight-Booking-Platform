@@ -2,6 +2,7 @@ package com.flightapp.flightservice.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,8 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
 			String toPlace, LocalDateTime start, LocalDateTime end, FlightStatus status, Sort sort);
 
 	boolean existsByFlightNumberIgnoreCase(String flightNumber);
+
+	Optional<Flight> findByFlightNumberIgnoreCase(String flightNumber);
 
 	List<Flight> findByAirlineId(Long airlineId);
 }
