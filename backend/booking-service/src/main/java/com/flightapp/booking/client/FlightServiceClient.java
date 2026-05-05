@@ -10,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import com.flightapp.booking.dto.external.FlightResponse;
 import com.flightapp.booking.exception.FlightNotFoundException;
 import com.flightapp.booking.exception.FlightServiceUnavailableException;
+import com.flightapp.booking.model.SeatClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,8 +38,8 @@ public class FlightServiceClient {
 		}
 	}
 
-	public void reduceSeats(Long flightId, int seatsToReduce) {
-		log.debug("Calling Flight Service: GET {} to read current seats", FLIGHT_BY_ID_URI.replace("{id}", flightId.toString()));
+	public void reduceSeats(Long flightId, Integer seatsToReduce, SeatClass seatClass) {
+		log.debug("Reducing {} seats in {} for flight {}", seatsToReduce, seatClass, flightId);
 		try {
 			FlightResponse current = webClient.get().uri(FLIGHT_BY_ID_URI, flightId).retrieve()
 					.bodyToMono(FlightResponse.class).block();
@@ -47,17 +48,14 @@ public class FlightServiceClient {
 				throw new FlightNotFoundException("Flight not found with id: " + flightId);
 			}
 
-			int totalAvailable = current.getEconomySeats() + current.getBusinessSeats();
+			Integer updatedEconomySeats = current.getEconomySeats();
+			Integer updatedBusinessSeats = current.getBusinessSeats();
 
-			int updatedEconomySeats = Math.max(0, current.getEconomySeats() - seatsToReduce);
-
-			int remainingReduction = seatsToReduce - (current.getEconomySeats() - updatedEconomySeats);
-
-			int updatedBusinessSeats = Math.max(0, current.getBusinessSeats() - remainingReduction);
-
-			log.debug("Reducing seats for flight: {} | total available: {} | " + "economy: {} → {} | business: {} → {}",
-					flightId, totalAvailable, current.getEconomySeats(), updatedEconomySeats,
-					current.getBusinessSeats(), updatedBusinessSeats);
+			if (seatClass == seatClass.ECONOMY) {
+				updatedEconomySeats = Math.max(0, updatedEconomySeats - seatsToReduce);
+			} else {
+				updatedBusinessSeats = Math.max(0, updatedBusinessSeats - seatsToReduce);
+			}
 
 			Map<String, Object> body = new HashMap<>();
 			body.put("economySeats", updatedEconomySeats);
@@ -65,12 +63,9 @@ public class FlightServiceClient {
 
 			webClient.patch().uri(FLIGHT_BY_ID_URI, flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
 
-			log.debug("Seats reduced for flight: {} new available: {}", flightId);
+			log.debug("Seats reduced for flight: {} class: {}", flightId, seatClass);
 
-		} catch (FlightNotFoundException e) {
-			throw e;
-		} catch (WebClientResponseException.NotFound e) {
-			log.error("Flight not found when reducing seats, id: {}", flightId);
+		} catch (FlightNotFoundException | WebClientResponseException.NotFound e) {
 			throw new FlightNotFoundException("Flight not found with id: " + flightId);
 		} catch (Exception e) {
 			log.error("Flight Service unavailable during seat reduction: {}", e.getMessage());
@@ -78,8 +73,8 @@ public class FlightServiceClient {
 		}
 	}
 
-	public void restoreSeats(Long flightId, int seatsToRestore) {
-		log.debug("Calling Flight Service: restore {} seats for flight {}", seatsToRestore, flightId);
+	public void restoreSeats(Long flightId, Integer seatsToRestore, SeatClass seatClass) {
+		log.debug("Restoring {} seats in {} for flight {}", seatsToRestore, seatClass, flightId);
 		try {
 			FlightResponse current = webClient.get().uri(FLIGHT_BY_ID_URI, flightId).retrieve()
 					.bodyToMono(FlightResponse.class).block();
@@ -88,19 +83,24 @@ public class FlightServiceClient {
 				throw new FlightNotFoundException("Flight not found with id: " + flightId);
 			}
 
-			int restoredEconomy = current.getEconomySeats() + seatsToRestore;
+			Integer updatedEconomySeats = current.getEconomySeats();
+			Integer updatedBusinessSeats = current.getBusinessSeats();
+
+			if (seatClass == SeatClass.ECONOMY) {
+				updatedEconomySeats += seatsToRestore;
+			} else {
+				updatedBusinessSeats += seatsToRestore;
+			}
 
 			Map<String, Object> body = new HashMap<>();
-			body.put("economySeats", restoredEconomy);
-			body.put("businessSeats", current.getBusinessSeats());
+			body.put("economySeats", updatedEconomySeats);
+			body.put("businessSeats", updatedBusinessSeats);
 
 			webClient.patch().uri(FLIGHT_BY_ID_URI, flightId).bodyValue(body).retrieve().bodyToMono(Void.class).block();
 
 			log.debug("Seats restored for flight: {} restored: {}", flightId, seatsToRestore);
 
-		} catch (FlightNotFoundException e) {
-			throw e;
-		} catch (WebClientResponseException.NotFound e) {
+		} catch (FlightNotFoundException | WebClientResponseException.NotFound e) {
 			throw new FlightNotFoundException("Flight not found with id: " + flightId);
 		} catch (Exception e) {
 			log.error("Failed to restore seats for flight: {} reason: {}", flightId, e.getMessage());

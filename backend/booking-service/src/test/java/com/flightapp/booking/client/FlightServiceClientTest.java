@@ -2,16 +2,17 @@ package com.flightapp.booking.client;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import com.flightapp.booking.dto.external.FlightResponse;
 import com.flightapp.booking.exception.FlightNotFoundException;
 import com.flightapp.booking.exception.FlightServiceUnavailableException;
+import com.flightapp.booking.model.SeatClass;
 
 import reactor.core.publisher.Mono;
 
@@ -60,7 +62,7 @@ public class FlightServiceClientTest {
 		FlightResponse flight = new FlightResponse();
 		flight.setFlightId(1L);
 		flight.setEconomySeats(42);
-		flight.setBusinessSeats(0);
+		flight.setBusinessSeats(10);
 		flight.setTicketCost(BigDecimal.valueOf(4500.0));
 		flight.setStatus("ACTIVE");
 		return flight;
@@ -82,7 +84,7 @@ public class FlightServiceClientTest {
 		assertEquals(1L, result.getFlightId());
 		assertEquals("ACTIVE", result.getStatus());
 		assertEquals(42, result.getEconomySeats());
-		assertEquals(0, result.getBusinessSeats());
+		assertEquals(10, result.getBusinessSeats());
 		assertEquals(BigDecimal.valueOf(4500.0), result.getTicketCost());
 	}
 
@@ -114,8 +116,8 @@ public class FlightServiceClientTest {
 	}
 
 	@Test
-	@DisplayName("reduceSeats: should reduce economy seats first then business")
-	void test_reduceSeats_reducesEconomyFirst() {
+	@DisplayName("reduceSeats: should reduce seats successfully")
+	void test_reduceSeats_success() {
 		FlightResponse current = buildFlightResponse();
 
 		when(webClient.get()).thenReturn(requestHeadersUriSpec);
@@ -129,7 +131,7 @@ public class FlightServiceClientTest {
 		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 		when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
 
-		assertDoesNotThrow(() -> flightServiceClient.reduceSeats(1L, 2));
+		assertDoesNotThrow(() -> flightServiceClient.reduceSeats(1L, 2, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -141,7 +143,7 @@ public class FlightServiceClientTest {
 		when(responseSpec.bodyToMono(FlightResponse.class))
 				.thenReturn(Mono.error(WebClientResponseException.NotFound.create(404, "Not Found", null, null, null)));
 
-		assertThrows(FlightNotFoundException.class, () -> flightServiceClient.reduceSeats(999L, 1));
+		assertThrows(FlightNotFoundException.class, () -> flightServiceClient.reduceSeats(999L, 1, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -153,7 +155,8 @@ public class FlightServiceClientTest {
 		when(responseSpec.bodyToMono(FlightResponse.class))
 				.thenReturn(Mono.error(new RuntimeException("Connection refused")));
 
-		assertThrows(FlightServiceUnavailableException.class, () -> flightServiceClient.reduceSeats(1L, 2));
+		assertThrows(FlightServiceUnavailableException.class,
+				() -> flightServiceClient.reduceSeats(1L, 2, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -172,7 +175,7 @@ public class FlightServiceClientTest {
 		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
 		when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
 
-		assertDoesNotThrow(() -> flightServiceClient.restoreSeats(1L, 2));
+		assertDoesNotThrow(() -> flightServiceClient.restoreSeats(1L, 2, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -181,11 +184,10 @@ public class FlightServiceClientTest {
 		when(webClient.get()).thenReturn(requestHeadersUriSpec);
 		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
 		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-		// Returns null — simulates empty body from Flight Service
 		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.empty());
 
 		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
-				() -> flightServiceClient.restoreSeats(1L, 2));
+				() -> flightServiceClient.restoreSeats(1L, 2, SeatClass.ECONOMY));
 
 		assertTrue(ex.getMessage().contains("1"));
 	}
@@ -199,7 +201,7 @@ public class FlightServiceClientTest {
 		when(responseSpec.bodyToMono(FlightResponse.class))
 				.thenReturn(Mono.error(WebClientResponseException.NotFound.create(404, "Not Found", null, null, null)));
 
-		assertThrows(FlightNotFoundException.class, () -> flightServiceClient.restoreSeats(999L, 2));
+		assertThrows(FlightNotFoundException.class, () -> flightServiceClient.restoreSeats(999L, 2, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -211,7 +213,8 @@ public class FlightServiceClientTest {
 		when(responseSpec.bodyToMono(FlightResponse.class))
 				.thenReturn(Mono.error(new RuntimeException("Connection refused")));
 
-		assertThrows(FlightServiceUnavailableException.class, () -> flightServiceClient.restoreSeats(1L, 2));
+		assertThrows(FlightServiceUnavailableException.class,
+				() -> flightServiceClient.restoreSeats(1L, 2, SeatClass.ECONOMY));
 	}
 
 	@Test
@@ -223,7 +226,7 @@ public class FlightServiceClientTest {
 		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.empty());
 
 		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
-				() -> flightServiceClient.reduceSeats(1L, 2));
+				() -> flightServiceClient.reduceSeats(1L, 2, SeatClass.ECONOMY));
 
 		assertTrue(ex.getMessage().contains("1"));
 	}
@@ -238,9 +241,57 @@ public class FlightServiceClientTest {
 				.thenReturn(Mono.error(WebClientResponseException.NotFound.create(404, "Not Found", null, null, null)));
 
 		FlightNotFoundException ex = assertThrows(FlightNotFoundException.class,
-				() -> flightServiceClient.reduceSeats(999L, 2));
+				() -> flightServiceClient.reduceSeats(999L, 2, SeatClass.ECONOMY));
 
 		assertTrue(ex.getMessage().contains("Flight not found"));
 		assertFalse(ex.getMessage().contains("unavailable"));
+	}
+
+	@Test
+	@DisplayName("reduceSeats: should specifically reduce business seats when class is BUSINESS")
+	void test_reduceSeats_business_success() {
+		FlightResponse current = buildFlightResponse();
+
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.just(current));
+
+		when(webClient.patch()).thenReturn(requestBodyUriSpec);
+		when(requestBodyUriSpec.uri(anyString(), anyLong())).thenReturn(requestBodySpec);
+
+		when(requestBodySpec.bodyValue(org.mockito.ArgumentMatchers.argThat(map -> {
+			Map<String, Object> body = (Map<String, Object>) map;
+			return body.get("businessSeats").equals(9) && body.get("economySeats").equals(42);
+		}))).thenReturn(requestHeadersSpec);
+
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+
+		assertDoesNotThrow(() -> flightServiceClient.reduceSeats(1L, 1, SeatClass.BUSINESS));
+	}
+
+	@Test
+	@DisplayName("restoreSeats: should specifically restore business seats when class is BUSINESS")
+	void test_restoreSeats_business_success() {
+		FlightResponse current = buildFlightResponse();
+
+		when(webClient.get()).thenReturn(requestHeadersUriSpec);
+		when(requestHeadersUriSpec.uri(anyString(), anyLong())).thenReturn(requestHeadersSpec);
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(FlightResponse.class)).thenReturn(Mono.just(current));
+
+		when(webClient.patch()).thenReturn(requestBodyUriSpec);
+		when(requestBodyUriSpec.uri(anyString(), anyLong())).thenReturn(requestBodySpec);
+
+		when(requestBodySpec.bodyValue(org.mockito.ArgumentMatchers.argThat(map -> {
+			Map<String, Object> body = (Map<String, Object>) map;
+			return body.get("businessSeats").equals(12);
+		}))).thenReturn(requestHeadersSpec);
+
+		when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+		when(responseSpec.bodyToMono(Void.class)).thenReturn(Mono.empty());
+
+		assertDoesNotThrow(() -> flightServiceClient.restoreSeats(1L, 2, SeatClass.BUSINESS));
 	}
 }

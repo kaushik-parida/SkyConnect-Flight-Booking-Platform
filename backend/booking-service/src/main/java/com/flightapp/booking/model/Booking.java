@@ -58,6 +58,10 @@ public class Booking {
 	
 	@Column(name = "departure_time", nullable = false)
 	private LocalDateTime departureTime;
+	
+	@Enumerated(EnumType.STRING)
+	@Column(name = "seat_class", nullable = false, length = 20)
+	private SeatClass seatClass;
 
 	@Column(name = "total_price", nullable = false, precision = 10, scale = 2)
 	private BigDecimal totalPrice;
