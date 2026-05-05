@@ -4,11 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import java.util.Date;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -16,34 +19,41 @@ import com.flightapp.flightservice.airline.dto.InventoryRequest;
 import com.flightapp.flightservice.airline.model.Inventory;
 import com.flightapp.flightservice.airline.repository.InventoryRepository;
 import com.flightapp.flightservice.airline.service.InventoryServiceImpl;
+import com.flightapp.flightservice.model.Flight;
+import com.flightapp.flightservice.repository.FlightRepository;
 
 public class InventoryServiceImplTest {
+
 	@Mock
 	private InventoryRepository inventoryRepository;
 
-	@InjectMocks
+	@Mock
+	private FlightRepository flightRepository;
+
 	private InventoryServiceImpl inventoryService;
 
 	@BeforeEach
 	void setup() {
 		MockitoAnnotations.openMocks(this);
+		inventoryService = new InventoryServiceImpl(inventoryRepository, flightRepository);
 	}
 
 	@Test
 	void AddInventorySuccess() {
-
 		InventoryRequest request = new InventoryRequest();
 		request.setAirlineId(1L);
 		request.setFlightNumber("AI101");
-		request.setSource("Bangalore");
-		request.setDestination("Delhi");
-		request.setDepartureTime(new Date());
-		request.setArrivalTime(new Date());
+		request.setFromPlace("Bangalore");
+		request.setToPlace("Delhi");
+		request.setDepartureTime(LocalDateTime.now());
+		request.setArrivalTime(LocalDateTime.now().plusHours(2));
 		request.setEconomySeats(120);
 		request.setBusinessSeats(20);
 
-		Inventory saved = Inventory.builder().id(1L).airlineId(1L).flightNumber("AI101").build();
+		Flight flight = Flight.builder().flightId(1L).flightNumber("AI101").build();
+		Inventory saved = Inventory.builder().id(1L).flight(flight).airlineId(1L).flightNumber("AI101").build();
 
+		when(flightRepository.findByFlightNumberIgnoreCase(anyString())).thenReturn(Optional.of(flight));
 		when(inventoryRepository.save(any(Inventory.class))).thenReturn(saved);
 
 		Long result = inventoryService.addInventory(request);
@@ -53,51 +63,44 @@ public class InventoryServiceImplTest {
 	}
 
 	@Test
-	void AddInventory_MissingFlightNumber() {
-
+	void AddInventory_FlightNotFound() {
 		InventoryRequest request = new InventoryRequest();
-		request.setAirlineId(1L);
-		request.setFlightNumber(null);
+		request.setFlightNumber("NONEXISTENT");
 
-		Exception exception = assertThrows(Exception.class, () -> {
+		when(flightRepository.findByFlightNumberIgnoreCase(anyString())).thenReturn(Optional.empty());
+
+		assertThrows(RuntimeException.class, () -> {
 			inventoryService.addInventory(request);
 		});
+	}
 
-		assertNotNull(exception);
+	@Test
+	void AddInventory_NullFlightNumber() {
+		InventoryRequest request = new InventoryRequest();
+		request.setFlightNumber(null);
+		assertThrows(NullPointerException.class, () -> {
+			inventoryService.addInventory(request);
+		});
 	}
 
 	@Test
 	void AddInventory_ZeroSeats() {
-
 		InventoryRequest request = new InventoryRequest();
 		request.setAirlineId(1L);
 		request.setFlightNumber("AI101");
+		request.setFromPlace("A");
+		request.setToPlace("B");
 		request.setEconomySeats(0);
 		request.setBusinessSeats(0);
 
-		Inventory saved = Inventory.builder().id(2L).build();
+		Flight flight = Flight.builder().flightId(2L).flightNumber("AI101").build();
+		Inventory saved = Inventory.builder().id(2L).flight(flight).build();
 
+		when(flightRepository.findByFlightNumberIgnoreCase(anyString())).thenReturn(Optional.of(flight));
 		when(inventoryRepository.save(any(Inventory.class))).thenReturn(saved);
 
 		Long result = inventoryService.addInventory(request);
 
 		assertEquals(2L, result);
 	}
-
-	@Test
-	void AddInventory_NullAirlineId() {
-
-		InventoryRequest request = new InventoryRequest();
-		request.setAirlineId(null);
-		request.setFlightNumber("AI101");
-
-		Inventory saved = Inventory.builder().id(3L).build();
-
-		when(inventoryRepository.save(any(Inventory.class))).thenReturn(saved);
-
-		Long result = inventoryService.addInventory(request);
-
-		assertEquals(3L, result);
-	}
-
 }

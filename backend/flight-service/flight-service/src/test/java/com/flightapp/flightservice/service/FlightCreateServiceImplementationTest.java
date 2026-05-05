@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.flightapp.flightservice.airline.repository.InventoryRepository;
 import com.flightapp.flightservice.dto.FlightCreateRequest;
 import com.flightapp.flightservice.enums.FlightStatus;
 import com.flightapp.flightservice.enums.MealType;
@@ -28,6 +29,10 @@ import com.flightapp.flightservice.repository.FlightRepository;
 class FlightCreateServiceImplementationTest {
 	@Mock
 	private FlightRepository flightRepository;
+
+	@Mock
+	private InventoryRepository inventoryRepository;
+
 	@InjectMocks
 	private FlightCreateServiceImplementation flightCreateService;
 

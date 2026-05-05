@@ -1,11 +1,15 @@
 package com.flightapp.flightservice.airline.model;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.flightapp.flightservice.model.Flight;
+
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,19 +22,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Inventory {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@OneToOne
+	@MapsId
+	@JoinColumn(name = "flight_id")
+	private Flight flight;
+
 	private Long airlineId;
-
 	private String flightNumber;
-	private String source;
-	private String destination;
+	private String fromPlace;
+	private String toPlace;
 
-	private Date departureTime;
-	private Date arrivalTime;
+	private LocalDateTime departureTime;
+	private LocalDateTime arrivalTime;
 
-	private int economySeats;
-	private int businessSeats;
-
+	private Integer economySeats;
+	private Integer businessSeats;
 }
