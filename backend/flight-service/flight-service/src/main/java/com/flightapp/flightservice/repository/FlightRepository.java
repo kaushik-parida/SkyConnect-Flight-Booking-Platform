@@ -2,7 +2,9 @@ package com.flightapp.flightservice.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.flightapp.flightservice.enums.FlightStatus;
@@ -10,9 +12,11 @@ import com.flightapp.flightservice.model.Flight;
 
 public interface FlightRepository extends JpaRepository<Flight, Long> {
 	List<Flight> findByFromPlaceIgnoreCaseAndToPlaceIgnoreCaseAndDepartureTimeBetweenAndStatus(String fromPlace,
-			String toPlace, LocalDateTime start, LocalDateTime end, FlightStatus status);
+			String toPlace, LocalDateTime start, LocalDateTime end, FlightStatus status, Sort sort);
 
 	boolean existsByFlightNumberIgnoreCase(String flightNumber);
+
+	Optional<Flight> findByFlightNumberIgnoreCase(String flightNumber);
 
 	List<Flight> findByAirlineId(Long airlineId);
 }

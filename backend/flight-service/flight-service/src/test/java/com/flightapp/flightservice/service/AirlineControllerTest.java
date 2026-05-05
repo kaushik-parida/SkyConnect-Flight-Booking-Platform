@@ -1,6 +1,7 @@
 package com.flightapp.flightservice.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -18,7 +19,8 @@ import com.flightapp.flightservice.airline.service.AirlineService;
 import com.flightapp.flightservice.airline.service.InventoryService;
 
 @WebMvcTest(AirlineController.class)
-public class AirlineContollerTest {
+public class AirlineControllerTest {
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -31,16 +33,19 @@ public class AirlineContollerTest {
 	@Test
 	void registerAirline() throws Exception {
 
-		when(airlineService.createAirline(org.mockito.ArgumentMatchers.any())).thenReturn(1L);
+		when(airlineService.createAirline(any())).thenReturn(1L);
 
-		mockMvc.perform(post("/api/v1.0/airline/register").contentType(MediaType.APPLICATION_JSON)
+		mockMvc.perform(post("/api/v1.0/flights/airline/register").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"name\":\"Indigo\",\"logoUrl\":\"logo.png\"}")).andExpect(status().isOk());
 	}
 
 	@Test
 	void blockAirline() throws Exception {
 
-		mockMvc.perform(put("/api/v1.0/airline/1").contentType(MediaType.APPLICATION_JSON).content("\"BLOCKED\""))
+		doNothing().when(airlineService).blockAirline(1L, "BLOCKED");
+
+		mockMvc.perform(
+				put("/api/v1.0/flights/airline/1").contentType(MediaType.APPLICATION_JSON).content("\"BLOCKED\""))
 				.andExpect(status().isOk());
 	}
 
@@ -49,23 +54,24 @@ public class AirlineContollerTest {
 
 		when(inventoryService.addInventory(any())).thenReturn(1L);
 
-		mockMvc.perform(post("/api/v1.0/airline/inventory/add").contentType(MediaType.APPLICATION_JSON).content("""
-				{
-				  "airlineId": 1,
-				  "flightNumber": "AI101",
-				  "source": "Bangalore",
-				  "destination": "Delhi",
-				  "economySeats": 120,
-				  "businessSeats": 20
-				}
-				""")).andExpect(status().isOk());
+		mockMvc.perform(
+				post("/api/v1.0/flights/airline/inventory/add").contentType(MediaType.APPLICATION_JSON).content("""
+						{
+						  "airlineId": 1,
+						  "flightNumber": "AI101",
+						  "source": "Bangalore",
+						  "destination": "Delhi",
+						  "economySeats": 120,
+						  "businessSeats": 20
+						}
+						""")).andExpect(status().isOk());
 	}
 
 	@Test
 	void registerAirline_EmptyBody() throws Exception {
 
-		mockMvc.perform(post("/api/v1.0/airline/register")
-				.contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("{}"))
+		mockMvc.perform(
+				post("/api/v1.0/flights/airline/register").contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest());
 	}
 }

@@ -8,6 +8,8 @@ public class AirlineRequest {
 
 	@NotBlank
 	private String name;
+	
+	private String contactNumber;
+	private String contactAddress;
 
-	private String logoUrl;
 }

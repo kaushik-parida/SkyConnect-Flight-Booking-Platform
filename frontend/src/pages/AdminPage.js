@@ -6,6 +6,7 @@ import {
   addAirline,
   blockAirline,
   unblockAirline,
+  addFlight,
 } from "../services/api";
 function AdminPage() {
   const [airlines, setAirlines] = useState([]);
@@ -18,11 +19,16 @@ function AdminPage() {
     name: "",
   });
   const [flightForm, setFlightForm] = useState({
+    flightNumber: "",
     airlineId: "",
-    from: "",
-    to: "",
+    fromPlace: "",
+    toPlace: "",
     departureTime: "",
-    price: "",
+    arrivalTime: "",
+    economySeats: "",
+    businessSeats: "",
+    ticketCost: "",
+    mealType: "VEG",
   });
 
   useEffect(() => {
@@ -89,33 +95,52 @@ function AdminPage() {
       setError("Action failed");
     }
   };
-  const handleFlightChange = (e) => {
+  const handleFlightChange = (event) => {
     setFlightForm({
       ...flightForm,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   };
   const handleAddFlight = async () => {
     if (
+      !flightForm.flightNumber ||
       !flightForm.airlineId ||
-      !flightForm.from ||
-      !flightForm.to ||
+      !flightForm.fromPlace ||
+      !flightForm.toPlace ||
       !flightForm.departureTime ||
-      !flightForm.price
+      !flightForm.arrivalTime ||
+      !flightForm.economySeats ||
+      !flightForm.businessSeats ||
+      !flightForm.ticketCost
     ) {
       setError("All flight fields are required");
       return;
     }
     try {
-      console.log("Flight Data:", flightForm);
+      const request = {
+        ...flightForm,
+        airlineId: Number(flightForm.airlineId),
+        economySeats: Number(flightForm.economySeats),
+        businessSeats: Number(flightForm.businessSeats),
+        ticketCost: Number(flightForm.ticketCost),
+        departureTime: flightForm.departureTime + ":00",
+        arrivalTime: flightForm.arrivalTime + ":00",
+      };
+       console.log("Add flight request:", request);
+      await addFlight(request);
       setFlightForm({
+        flightNumber: "",
         airlineId: "",
-        from: "",
-        to: "",
+        fromPlace: "",
+        toPlace: "",
         departureTime: "",
-        price: "",
+        arrivalTime: "",
+        economySeats: "",
+        businessSeats: "",
+        ticketCost: "",
+        mealType: "VEG",
       });
-      alert("Flight added (UI only)");
+      alert("Flight added successfully");
     } catch {
       setError("Error adding flight");
     }
@@ -143,6 +168,11 @@ function AdminPage() {
           </div>
           <div style={styles.section}>
             <h3>Add Flight</h3>
+
+            <input name="flightNumber"
+              placeholder="Flight Number"
+              value={flightForm.flightNumber} onChange={handleFlightChange}
+              style={styles.input} />
             <input
               name="airlineId"
               placeholder="Airline ID"
@@ -151,16 +181,16 @@ function AdminPage() {
               style={styles.input}
             />
             <input
-              name="from"
+              name="fromPlace"
               placeholder="From"
-              value={flightForm.from}
+              value={flightForm.fromPlace}
               onChange={handleFlightChange}
               style={styles.input}
             />
             <input
-              name="to"
+              name="toPlace"
               placeholder="To"
-              value={flightForm.to}
+              value={flightForm.toPlace}
               onChange={handleFlightChange}
               style={styles.input}
             />
@@ -172,12 +202,42 @@ function AdminPage() {
               style={styles.input}
             />
             <input
-              name="price"
-              placeholder="Price"
-              value={flightForm.price}
+              type="datetime-local"
+              name="arrivalTime"
+              value={flightForm.arrivalTime}
               onChange={handleFlightChange}
               style={styles.input}
             />
+            <input
+              name="economySeats"
+              placeholder="Economy seats"
+              value={flightForm.economySeats}
+              onChange={handleFlightChange}
+              style={styles.input}
+            />
+            <input
+              name="businessSeats"
+              placeholder="Business seats"
+              value={flightForm.businessSeats}
+              onChange={handleFlightChange}
+              style={styles.input}
+            />
+            <input
+              name="ticketCost"
+              placeholder="Ticket Cost"
+              value={flightForm.ticketCost}
+              onChange={handleFlightChange}
+              style={styles.input}
+            />
+            <select name="mealType"
+              value={flightForm.mealType}
+              onChange={handleFlightChange}
+              style={styles.input}>
+              <option value="VEG">VEG</option>
+              <option value="NON_VEG">NON_VEG</option>
+              <option value="NONE">NONE</option>
+            </select>
+
             <button style={styles.addBtn} onClick={handleAddFlight}>
               Add Flight
             </button>

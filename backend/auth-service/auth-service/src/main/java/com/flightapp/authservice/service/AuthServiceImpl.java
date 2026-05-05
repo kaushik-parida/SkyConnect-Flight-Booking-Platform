@@ -35,9 +35,14 @@ public class AuthServiceImpl implements AuthService {
 			throw new RuntimeException("Email already registered");
 		}
 
+		Role userRole = Role.USER;
+		if (request.getRole() != null && request.getRole().equalsIgnoreCase("ADMIN")) {
+			userRole = Role.ADMIN;
+		}
+
 		User user = User.builder().fullName(request.getFullName()).email(request.getEmail())
 				.password(passwordEncoder.encode(request.getPassword())).phoneNumber(request.getPhoneNumber())
-				.gender(request.getGender()).dateOfBirth(LocalDate.parse(request.getDateOfBirth())).role(Role.USER)
+				.gender(request.getGender()).dateOfBirth(LocalDate.parse(request.getDateOfBirth())).role(userRole)
 				.enabled(true).build();
 
 		User savedUser = userRepository.save(user);

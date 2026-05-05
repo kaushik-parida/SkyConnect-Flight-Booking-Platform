@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.flightapp.flightservice.airline.repository.InventoryRepository;
 import com.flightapp.flightservice.dto.FlightCreateRequest;
 import com.flightapp.flightservice.enums.FlightStatus;
 import com.flightapp.flightservice.enums.MealType;
@@ -28,6 +29,10 @@ import com.flightapp.flightservice.repository.FlightRepository;
 class FlightCreateServiceImplementationTest {
 	@Mock
 	private FlightRepository flightRepository;
+
+	@Mock
+	private InventoryRepository inventoryRepository;
+
 	@InjectMocks
 	private FlightCreateServiceImplementation flightCreateService;
 
@@ -76,7 +81,7 @@ class FlightCreateServiceImplementationTest {
 	@Test
 	void createFlight_shouldThrowException_whenSourceAndDestinationAreSame() {
 		FlightCreateRequest request = validRequest();
-		request.setTo("Bangalore");
+		request.setToPlace("Bangalore");
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
 				() -> flightCreateService.createFlight(request));
 		assertEquals("Source and destination cannot be the same", exception.getMessage());
@@ -93,17 +98,19 @@ class FlightCreateServiceImplementationTest {
 		assertEquals("At least one seat class must have seats", exception.getMessage());
 		verify(flightRepository, never()).save(any());
 	}
+
 	@Test
 	void createFlight_shouldThrowException_whenSourceHasInvalidCharacters() {
 		FlightCreateRequest request = validRequest();
-		request.setFrom("Bangalore123");
-		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,()->flightCreateService.createFlight(request));
-		assertEquals("Place must contain only letters",exception.getMessage());
-		verify(flightRepository,never()).save(any());
+		request.setFromPlace("Bangalore123");
+		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+				() -> flightCreateService.createFlight(request));
+		assertEquals("Place must contain only letters", exception.getMessage());
+		verify(flightRepository, never()).save(any());
 	}
 
 	private FlightCreateRequest validRequest() {
-		return FlightCreateRequest.builder().flightNumber("AI301").airlineId(1L).from("Bangalore").to("Delhi")
+		return FlightCreateRequest.builder().flightNumber("AI301").airlineId(1L).fromPlace("Bangalore").toPlace("Delhi")
 				.departureTime(LocalDateTime.of(2026, 5, 1, 9, 0)).arrivalTime(LocalDateTime.of(2026, 5, 1, 11, 0))
 				.economySeats(100).businessSeats(20).ticketCost(BigDecimal.valueOf(5000)).mealType(MealType.VEG)
 				.build();
