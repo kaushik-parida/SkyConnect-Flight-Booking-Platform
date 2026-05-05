@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { searchFlights } from "../services/api";
-const places = ["Bangalore","Delhi","Mumbai","Chennai","Hyderabad","Kolkata","Paris","Germany"];
+import places from "../data/airport.json";
 const FlightSearch = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -10,7 +10,6 @@ const FlightSearch = () => {
     departureDate: "",
     returnDate: "",
   });
-  const [flights, setFlights] = useState([]); 
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("error");
   const [results, setResults] = useState(null);
@@ -49,15 +48,23 @@ const FlightSearch = () => {
       return;
     }
     try {
-      showMessage("Searching flights...", "success");
-      const data = await searchFlights(form);
-      console.log("Flights:", data);
-      setFlights(data);
-      showMessage("Flights loaded successfully", "success");
-      navigate("/results", { state: data });
+       const request = {
+        from: form.from,
+        to: form.to,
+        departureDate: form.departureDate,
+        returnDate: form.returnDate || null,
+        tripType: form.returnDate ? "ROUND_TRIP" : "ONE_WAY",
+        sortBy: "PRICE",
+        sortDirection: false,
+      };
+      const data = await searchFlights(request);
+      console.log("Search results:", data);
+      setResults(data);
+      showMessage("Flights found", "success");
     } catch (error) {
       console.error(error);
-      showMessage("Failed to fetch flights");
+      setResults(null);
+      showMessage("No flights found");
     }
   };
   const renderFlightCard = (flight) => (
@@ -105,7 +112,7 @@ const FlightSearch = () => {
           <select name="from" onChange={handleChange} style={styles.input}>
             <option value="">Select city</option>
             {places.map((place) => (
-              <option key={place}>{place}</option>
+              <option key={place.code} value={place.city}>{place.city}</option>
             ))}
           </select>
         </div>
@@ -114,7 +121,7 @@ const FlightSearch = () => {
           <select name="to" onChange={handleChange} style={styles.input}>
             <option value="">Select city</option>
             {places.map((place) => (
-              <option key={place}>{place}</option>
+              <option key={place.code} value={place.city}>{place.city}</option>
             ))}
           </select>
         </div>
