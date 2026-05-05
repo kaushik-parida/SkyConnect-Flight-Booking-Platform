@@ -43,7 +43,9 @@
 			**/exception/*Exception.java,
 			**/BookingServiceApplication.java,
 			**/config/AppConfig.java,
-			**/config/OpenApiConfig.java
+			**/config/OpenApiConfig.java,
+			**/config/SecurityConfig.java,
+			**/config/GatewayHeaderFile.java
 		</sonar.exclusions>
 		<sonar.coverage.exclusions>
 			**/model/**,
@@ -51,7 +53,9 @@
 			**/exception/*Exception.java,
 			**/BookingServiceApplication.java,
 			**/config/AppConfig.java,
-			**/config/OpenApiConfig.java
+			**/config/OpenApiConfig.java,
+			**/config/SecurityConfig.java,
+			**/config/GatewayHeaderFile.java
 		</sonar.coverage.exclusions>
 		<sonar.test.exclusions>
 			**/test/**
@@ -305,6 +309,10 @@
 									com/flightapp/booking/config/AppConfig.class</exclude>
 								<exclude>
 									com/flightapp/booking/config/OpenApiConfig.class</exclude>
+								<exclude>
+									com/flightapp/booking/config/SecurityConfig.class</exclude>
+								<exclude>
+									com/flightapp/booking/config/GatewayHeaderFilter.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>
