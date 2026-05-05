@@ -1,6 +1,16 @@
+const { getServiceUrl } = require("./eurekaClient");
+
 module.exports = {
-  authServiceUrl: "http://localhost:3003",
-  flightServiceUrl: "http://localhost:3003",
-  bookingServiceUrl: "http://localhost:3003",
-  airlineServiceUrl: "http://localhost:3003"
+  get authServiceUrl() {
+    return getServiceUrl("AUTH-SERVICE") || process.env.AUTH_SERVICE_URL || "http://localhost:8081";
+  },
+  get flightServiceUrl() {
+    return getServiceUrl("FLIGHT-SERVICE") || process.env.FLIGHT_SERVICE_URL || "http://localhost:8082";
+  },
+  get bookingServiceUrl() {
+    return getServiceUrl("BOOKING-SERVICE") || process.env.BOOKING_SERVICE_URL || "http://localhost:8084";
+  },
+  get airlineServiceUrl() {
+    return getServiceUrl("FLIGHT-SERVICE") || process.env.FLIGHT_SERVICE_URL || "http://localhost:8082";
+  },
 };
