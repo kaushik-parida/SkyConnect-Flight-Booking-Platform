@@ -1,20 +1,23 @@
 const authService = require("../services/authService");
 
 exports.login = async (request, response) => {
-    try {
-        const credentials = request.body;
+  try {
+    const data = await authService.login(request.body);
+    response.json(data);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || "Login failed";
+    response.status(status).json({ message });
+  }
+};
 
-        console.log("Login request");
-
-        const data = await authService.login(credentials);
-
-        response.json(data);
-
-    } catch (error) {
-        console.error("Login error:", error.message);
-
-        response.status(500).json({
-            message: "Login failed"
-        });
-    }
+exports.register = async (request, response) => {
+  try {
+    const data = await authService.register(request.body);
+    response.json(data);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || "Registration failed";
+    response.status(status).json({ message });
+  }
 };
