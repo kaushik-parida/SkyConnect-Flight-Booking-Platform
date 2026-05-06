@@ -48,6 +48,7 @@ import com.flightapp.booking.exception.FlightServiceUnavailableException;
 import com.flightapp.booking.exception.InsufficientSeatsException;
 import com.flightapp.booking.exception.UnauthorizedBookingAccessException;
 import com.flightapp.booking.model.Booking;
+import com.flightapp.booking.model.BookingPassenger;
 import com.flightapp.booking.model.BookingStatus;
 import com.flightapp.booking.model.Payment;
 import com.flightapp.booking.model.PaymentStatus;
@@ -426,15 +427,18 @@ public class BookingServiceImplementationTest {
 	}
 
 	@Test
-	@DisplayName("createBooking: should throw DuplicateBookingException when booking already exists")
-	void test_createBooking_duplicate_throwsException() {
-		when(bookingRepository.existsByUserIdAndFlightIdAndStatusNot("USER-001", 1L, BookingStatus.CANCELLED))
-				.thenReturn(true);
+	@DisplayName("createBooking: should throw DuplicateBookingException when passenger already exists on flight")
+	void test_createBooking_duplicatePassenger_throwsException() {
+		BookingPassenger p = BookingPassenger.builder().firstName("Rahul").lastName("Sharma").build();
+		Booking existing = Booking.builder().passengers(List.of(p)).build();
+
+		when(bookingRepository.findByUserIdAndFlightIdAndStatusNot("USER-001", 1L, BookingStatus.CANCELLED))
+				.thenReturn(List.of(existing));
 
 		assertThrows(DuplicateBookingException.class, () -> bookingService.createBooking(1L, validRequest));
 
+		verify(bookingRepository, never()).save(any(Booking.class));
 		verify(flightServiceClient, never()).getFlightById(anyLong());
-		verify(bookingRepository, never()).save(any());
 	}
 
 	@Test
