@@ -125,4 +125,10 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 				.orElseThrow(() -> new NoFlightsFoundException("Flight not found with id: " + id));
 		return mapToResponse(flight);
 	}
+
+	@Override
+	public List<FlightResponse> getAllFlights() {
+		List<Flight> flights = flightRepository.findAll();
+		return flights.stream().map(this::mapToResponse).toList();
+	}
 }

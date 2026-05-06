@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
     const storedUser = localStorage.getItem("userProfile");
     const storedRole = localStorage.getItem("role");
     const token = localStorage.getItem("token");
@@ -26,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("role", role);
     localStorage.setItem("userProfile", JSON.stringify(userData));
     localStorage.setItem("userId", userData.userId);
-    
+
     setUser(userData);
     setRole(role);
   };

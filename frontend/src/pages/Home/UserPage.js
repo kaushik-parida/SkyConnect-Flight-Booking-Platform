@@ -6,50 +6,31 @@ export default function UserPage() {
   return (
     <div className="app-container">
       <Navbar />
-
-      <main className="scroll-area" style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-        <section style={{ 
-          minHeight: "calc(100vh - 120px)", 
-          display: "flex", 
-          flexDirection: "column", 
-          justifyContent: "center",
-          padding: "0 20px"
-        }}>
-          <div className="container animate-slide-up" style={{ maxWidth: "1000px" }}>
-            <div style={{ textAlign: "center", marginBottom: "48px" }}>
-              <div className="badge badge-success" style={{ marginBottom: "20px", background: "rgba(0, 229, 255, 0.1)", color: "var(--cyan)", borderColor: "rgba(0, 229, 255, 0.2)" }}>
-                ✦ PREMIER FLIGHT BOOKING EXPERIENCE
+      <main className="scroll-area" style={{ padding: 0, display: "flex", flexDirection: "column", height: "calc(100vh - 72px)", overflow: "hidden" }}>
+        <section style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", paddingTop: "20px", paddingLeft: "20px", paddingRight: "20px" }}>
+          <div className="container" style={{ maxWidth: "1200px" }}>
+            <div className="animate-slide-up" style={{ textAlign: "center", marginBottom: "24px" }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", marginBottom: "28px" }}>
+                <span className="badge badge-accent" style={{ padding: "8px 20px", fontSize: "12px", letterSpacing: "0.05em" }}>
+                  ✦ India's Premier Flight Booking Experience
+                </span>
               </div>
-              <h1 className="hero-title">
-                Explore the Skies<br />
-                With <span style={{ color: "var(--accent)" }}>SkyConnect</span>
+
+              <h1 className="hero-title" style={{ fontSize: "clamp(42px, 5vw, 68px)", maxWidth: "860px", margin: "0 auto 24px" }}>
+                Explore the Skies<br />with Confidence
               </h1>
-              <p className="hero-subtitle" style={{ margin: "0 auto 32px" }}>
-                Experience the ultimate in travel convenience. Seamless search, instant bookings, 
-                and premium service—all in one place.
+              <p className="hero-subtitle" style={{ fontSize: "18px", maxWidth: "600px", margin: "0 auto 32px", color: "var(--text-main)" }}>
+                Search, compare, and book flights across India with real-time seat availability, smart pricing, and zero hidden fees.
               </p>
             </div>
 
-            <div className="glass-card" style={{ padding: "32px", width: "100%" }}>
+            <div className="glass-card animate-scale-in" style={{
+              padding: "40px 48px",
+              animationDelay: "100ms",
+              boxShadow: "var(--shadow-xl), 0 0 0 1px rgba(61,90,254,0.08)",
+            }}>
               <FlightSearch />
             </div>
-          </div>
-        </section>
-
-        <section className="container" style={{ paddingBottom: "60px" }}>
-          <div className="grid grid-cols-4">
-            {[
-              { icon: "⚡", title: "Instant Booking", desc: "Book your flight in seconds with our streamlined checkout." },
-              { icon: "💎", title: "Premium Care", desc: "Experience luxury travel with our curated selection of airlines." },
-              { icon: "🛡️", title: "Safe & Secure", desc: "Your data and payments are protected by military-grade encryption." },
-              { icon: "🌍", title: "Global Reach", desc: "Connect to hundreds of destinations across the country and beyond." },
-            ].map((f, i) => (
-              <div key={i} className="glass-card glass-card-hover" style={{ padding: "24px" }}>
-                <div style={{ fontSize: "32px", marginBottom: "16px" }}>{f.icon}</div>
-                <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "8px", color: "var(--white)" }}>{f.title}</h3>
-                <p style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: "1.5" }}>{f.desc}</p>
-              </div>
-            ))}
           </div>
         </section>
       </main>
