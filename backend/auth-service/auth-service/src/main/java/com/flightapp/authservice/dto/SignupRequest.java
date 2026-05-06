@@ -8,22 +8,25 @@ import lombok.Data;
 @Data
 public class SignupRequest {
 
-	@NotBlank
-	private String fullName;
+    @NotBlank(message = "Full name is required")
+    private String fullName;
 
-	@Email
-	@NotBlank
-	private String email;
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    private String email;
 
-	@NotBlank
-	private String password;
+    @NotBlank(message = "Password is required")
+    private String password;
 
-	private String phoneNumber;
+    private String phoneNumber;
 
-	@Pattern(regexp = "MALE|FEMALE", message = "Gender must be MALE or FEMALE")
-	private String gender;
+    @Pattern(
+        regexp = "MALE|FEMALE",
+        message = "Gender must be MALE or FEMALE"
+    )
+    private String gender;
 
-	private String dateOfBirth;
-	
-	private String role;
+    private String dateOfBirth;
+
+    private String role;
 }
