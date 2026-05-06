@@ -44,6 +44,11 @@ public class AuthController {
     public ResponseEntity<UserResponse> getUserById(
             @PathVariable String userId) {
 
-        return ResponseEntity.ok(authService.getUserById(userId));
-    }
+		return ResponseEntity.ok(authService.getUserById(userId));
+	}
+	
+	@GetMapping("/users")
+	public ResponseEntity<java.util.List<UserResponse>> getAllUsers() {
+		return ResponseEntity.ok(authService.getAllUsers());
+	}
 }

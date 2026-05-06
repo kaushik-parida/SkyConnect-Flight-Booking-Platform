@@ -84,4 +84,12 @@ public class AuthServiceImpl implements AuthService {
 		return UserResponse.builder().userId(user.getId().toString()).email(user.getEmail())
 				.fullName(user.getFullName()).role(user.getRole().name()).enabled(user.isEnabled()).build();
 	}
+	
+	@Override
+	public java.util.List<UserResponse> getAllUsers() {
+		return userRepository.findAll().stream()
+				.map(user -> UserResponse.builder().userId(user.getId().toString()).email(user.getEmail())
+						.fullName(user.getFullName()).role(user.getRole().name()).enabled(user.isEnabled()).build())
+				.toList();
+	}
 }

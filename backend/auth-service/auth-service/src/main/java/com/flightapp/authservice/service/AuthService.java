@@ -1,5 +1,7 @@
 package com.flightapp.authservice.service;
 
+import java.util.List;
+
 import com.flightapp.authservice.dto.CommonResponse;
 import com.flightapp.authservice.dto.LoginRequest;
 import com.flightapp.authservice.dto.LoginResponse;
@@ -14,4 +16,6 @@ public interface AuthService {
 	CommonResponse<LoginResponse> login(LoginRequest request);
 
 	UserResponse getUserById(String userId);
+
+	List<UserResponse> getAllUsers();
 }
