@@ -1,5 +1,6 @@
 package com.flightapp.booking.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -23,4 +24,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	boolean existsByBookingIdAndUserId(Long bookingId, String userId);
 
 	boolean existsByUserIdAndFlightIdAndStatusNot(String userId, Long flightId, BookingStatus status);
+	
+	List<Booking> findByUserIdAndFlightIdAndStatusNot(String userId, Long flightId, BookingStatus status);
 }

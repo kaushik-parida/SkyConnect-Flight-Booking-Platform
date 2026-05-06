@@ -21,6 +21,7 @@ public class BookingResponse {
 	private LocalDateTime departureTime;
 	private BigDecimal totalPrice;
 	private BookingStatus status;
+	private String seatClass;
 	private LocalDateTime bookingTime;
 	private List<PassengerResponse> passengers;
 }
