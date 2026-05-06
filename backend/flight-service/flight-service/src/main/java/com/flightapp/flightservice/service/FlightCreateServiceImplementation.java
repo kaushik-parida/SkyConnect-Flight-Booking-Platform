@@ -55,6 +55,40 @@ public class FlightCreateServiceImplementation implements FlightCreateService {
 		return savedFlight.getFlightId();
 	}
 
+	@Override
+	@Transactional
+	public Long updateFlight(Long id, FlightCreateRequest request) {
+		validateCreateRequest(request);
+
+		Flight flight = flightRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Flight not found with id: " + id));
+
+		flight.setFromPlace(request.getFromPlace().trim());
+		flight.setToPlace(request.getToPlace().trim());
+		flight.setDepartureTime(request.getDepartureTime());
+		flight.setArrivalTime(request.getArrivalTime());
+		flight.setTicketCost(request.getTicketCost());
+		flight.setMealType(request.getMealType());
+		flight.setEconomySeats(request.getEconomySeats());
+		flight.setBusinessSeats(request.getBusinessSeats());
+
+		Flight savedFlight = flightRepository.save(flight);
+
+		Inventory inventory = inventoryRepository.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Inventory not found for flight id: " + id));
+
+		inventory.setFromPlace(request.getFromPlace().trim());
+		inventory.setToPlace(request.getToPlace().trim());
+		inventory.setDepartureTime(request.getDepartureTime());
+		inventory.setArrivalTime(request.getArrivalTime());
+		inventory.setEconomySeats(request.getEconomySeats());
+		inventory.setBusinessSeats(request.getBusinessSeats());
+
+		inventoryRepository.save(inventory);
+
+		return savedFlight.getFlightId();
+	}
+
 	private void validateCreateRequest(FlightCreateRequest request) {
 		validatePlace(request.getFromPlace());
 		validatePlace(request.getToPlace());
