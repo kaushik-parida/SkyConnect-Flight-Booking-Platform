@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
-// Pages
 import LoginPage from "./pages/Auth/LoginPage";
 import SignupPage from "./pages/Auth/SignupPage";
 import UserPage from "./pages/Home/UserPage";
@@ -11,10 +11,8 @@ import BookingPage from "./pages/Booking/BookingPage";
 import BookingHistoryPage from "./pages/Booking/BookingHistoryPage";
 import BookingConfirmationPage from "./pages/Booking/BookingConfirmationPage";
 import AdminPage from "./pages/Admin/AdminPage";
+import BoardingPassPage from "./pages/Booking/BoardingPassPage";
 
-/**
- * Protected Route component to guard sensitive views.
- */
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
@@ -28,21 +26,18 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/" element={<UserPage />} />
+      <Route path="/results" element={<ResultsPage />} />
 
-      {/* User Routes */}
-      <Route path="/" element={<ProtectedRoute><UserPage /></ProtectedRoute>} />
-      <Route path="/results" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
       <Route path="/booking" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
       <Route path="/booking/history" element={<ProtectedRoute><BookingHistoryPage /></ProtectedRoute>} />
       <Route path="/booking/confirmation" element={<ProtectedRoute><BookingConfirmationPage /></ProtectedRoute>} />
+      <Route path="/boarding-pass" element={<ProtectedRoute><BoardingPassPage /></ProtectedRoute>} />
 
-      {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
 
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
@@ -50,10 +45,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

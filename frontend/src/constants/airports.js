@@ -6,7 +6,7 @@ export const AIRPORTS = [
   { city: "Chennai", "code": "MAA" },
   { city: "Kolkata", "code": "CCU" },
   { city: "Pune", "code": "PNQ" },
-  { "city": "Ahmedabad", "code": "AMD" },
+  { city: "Ahmedabad", "code": "AMD" },
   { city: "Goa", "code": "GOI" },
   { city: "Kochi", "code": "COK" }
 ];

@@ -2,24 +2,36 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { register } from "../../services/api";
 
+const STEPS_INFO = [
+  { icon: "👤", text: "Create your traveller profile" },
+  { icon: "🔒", text: "Secured with enterprise-grade encryption" },
+  { icon: "⚡", text: "Start booking flights instantly" },
+  { icon: "🎫", text: "Manage all your trips in one place" },
+];
+
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ fullName: "", email: "", password: "", phoneNumber: "", gender: "MALE", dateOfBirth: "" });
+  const [form, setForm] = useState({
+    fullName: "", email: "", password: "", phoneNumber: "",
+    gender: "MALE", dateOfBirth: "", role: "USER"
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (!form.fullName || !form.email || !form.password || !form.dateOfBirth) { setError("Please fill all required fields"); return; }
+    if (!form.fullName || !form.email || !form.password || !form.dateOfBirth) {
+      setError("Please fill all required fields"); return;
+    }
     if (form.password.length < 6) { setError("Password must be at least 6 characters"); return; }
-    setLoading(true); setError(""); setSuccess("");
+    setLoading(true); setError("");
     try {
       await register(form);
-      setSuccess("Account created successfully!");
-      setTimeout(() => navigate("/login"), 1500);
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {
@@ -27,57 +39,78 @@ export default function SignupPage() {
     }
   };
 
-  return (
-    <div className="app-container" style={{ justifyContent: "center", alignItems: "center" }}>
-      <div className="animate-slide-up" style={{ width: "100%", maxWidth: "540px", padding: "20px" }}>
-        <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "12px",
-              background: "linear-gradient(135deg, var(--accent), var(--cyan))",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, fontWeight: 800, color: "#fff",
-              boxShadow: "var(--shadow-accent)"
-            }}>✈</div>
-            <span style={{ fontSize: 28, fontWeight: 800, color: "var(--white)", letterSpacing: "-1px" }}>
-              Sky<span style={{ color: "var(--cyan)" }}>Connect</span>
-            </span>
+  if (success) {
+    return (
+      <div className="split-layout" style={{ alignItems: "center", justifyContent: "center" }}>
+        <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%" }}>
+          <div className="animate-scale-in glass-card" style={{ padding: "60px 48px", textAlign: "center", maxWidth: "440px" }}>
+            <div style={{ fontSize: "64px", marginBottom: "20px" }}>🎉</div>
+            <h2 style={{ marginBottom: "12px" }}>Account Created!</h2>
+            <p style={{ color: "var(--text-dim)" }}>Redirecting you to sign in...</p>
           </div>
-          <p style={{ color: "var(--text-dim)", fontSize: "15px" }}>Start your journey with us today.</p>
         </div>
+      </div>
+    );
+  }
 
-        <div className="glass-card" style={{ padding: "40px" }}>
-          <h2 style={{ fontSize: "24px", marginBottom: "8px", color: "var(--white)" }}>Join SkyConnect</h2>
-          <p style={{ fontSize: "14px", color: "var(--text-dim)", marginBottom: "28px" }}>Fill in your details to create a new account.</p>
+  return (
+    <div className="split-layout">
+      <div className="split-form-side">
+        <div className="animate-scale-in" style={{ width: "100%", maxWidth: "440px" }}>
+          <div style={{ marginBottom: "28px" }}>
+            <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "10px", textDecoration: "none", marginBottom: "24px" }}>
+              <div style={{
+                width: "40px", height: "40px", borderRadius: "12px",
+                background: "linear-gradient(135deg, var(--accent), var(--cyan))",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px",
+                boxShadow: "var(--shadow-accent)",
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </div>
+              <span style={{ fontSize: "20px", fontWeight: "800", color: "var(--text-heading)", fontFamily: "'Outfit',sans-serif" }}>
+                Sky<span style={{ color: "var(--accent)" }}>Connect</span>
+              </span>
+            </Link>
+            <h1 style={{ fontSize: "26px", fontWeight: "800", marginBottom: "6px", letterSpacing: "-0.5px" }}>Create your account</h1>
+            <p style={{ color: "var(--text-dim)", fontSize: "14px" }}>Fill in the details below to get started.</p>
+          </div>
 
-          {error && <div className="badge badge-danger" style={{ width: "100%", padding: "10px", marginBottom: "20px", textAlign: "center" }}>⚠ {error}</div>}
-          {success && <div className="badge badge-success" style={{ width: "100%", padding: "10px", marginBottom: "20px", textAlign: "center" }}>✓ {success}</div>}
+          {error && (
+            <div className="badge badge-danger" style={{ width: "100%", padding: "10px 14px", marginBottom: "16px", borderRadius: "10px", fontSize: "12px" }}>
+              ⚠ {error}
+            </div>
+          )}
 
           <form onSubmit={handleSignup}>
             <div className="input-group">
               <label className="input-label">Full Name *</label>
-              <input className="input-field" name="fullName" placeholder="John Doe" value={form.fullName} onChange={handleChange} />
+              <input className="input-field" name="fullName" placeholder="Full Name"
+                value={form.fullName} onChange={handleChange} />
             </div>
 
             <div className="grid grid-cols-2">
               <div className="input-group">
-                <label className="input-label">Email Address *</label>
-                <input className="input-field" name="email" type="email" placeholder="john@example.com" value={form.email} onChange={handleChange} />
+                <label className="input-label">Email *</label>
+                <input className="input-field" name="email" type="email" placeholder="Email Address"
+                  value={form.email} onChange={handleChange} />
               </div>
               <div className="input-group">
                 <label className="input-label">Password *</label>
-                <input className="input-field" name="password" type="password" placeholder="Min 6 chars" value={form.password} onChange={handleChange} />
+                <input className="input-field" name="password" type="password" placeholder="Min 6 chars"
+                  value={form.password} onChange={handleChange} />
               </div>
             </div>
 
             <div className="grid grid-cols-2">
               <div className="input-group">
-                <label className="input-label">Phone Number</label>
-                <input className="input-field" name="phoneNumber" placeholder="+91 9999999999" value={form.phoneNumber} onChange={handleChange} />
+                <label className="input-label">Phone</label>
+                <input className="input-field" name="phoneNumber" placeholder="+91 9999999999"
+                  value={form.phoneNumber} onChange={handleChange} />
               </div>
               <div className="input-group">
                 <label className="input-label">Date of Birth *</label>
-                <input className="input-field" type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={handleChange} style={{ colorScheme: "dark" }} />
+                <input className="input-field" type="date" name="dateOfBirth"
+                  value={form.dateOfBirth} onChange={handleChange} style={{ colorScheme: "dark" }} />
               </div>
             </div>
 
@@ -92,25 +125,49 @@ export default function SignupPage() {
               </div>
               <div className="input-group">
                 <label className="input-label">Account Type</label>
-                <select className="input-field" name="role" value={form.role || "USER"} onChange={handleChange}>
+                <select className="input-field" name="role" value={form.role} onChange={handleChange}>
                   <option value="USER">Standard User</option>
                   <option value="ADMIN">Administrator</option>
                 </select>
               </div>
             </div>
 
-            <button className="btn btn-primary" type="submit" disabled={loading} style={{ width: "100%", height: "54px", marginTop: "12px" }}>
-              {loading ? "Creating Account..." : "Join Now"}
+            <button className="btn btn-primary" type="submit" disabled={loading}
+              style={{ width: "100%", height: "50px", marginTop: "4px", fontSize: "15px" }}>
+              {loading ? "Creating Account..." : "Create Account →"}
             </button>
           </form>
 
-          <div style={{ marginTop: "32px", textAlign: "center", borderTop: "1px solid var(--glass-border)", paddingTop: "24px" }}>
-            <p style={{ fontSize: "14px", color: "var(--text-dim)" }}>
-              Already have an account?{" "}
-              <Link to="/login" style={{ color: "var(--cyan)", fontWeight: "700", textDecoration: "none" }}>
-                Sign In →
-              </Link>
-            </p>
+          <p style={{ textAlign: "center", marginTop: "20px", fontSize: "14px", color: "var(--text-dim)" }}>
+            Already have an account?{" "}
+            <Link to="/login" style={{ color: "var(--accent)", fontWeight: "700", textDecoration: "none" }}>
+              Sign In →
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      <div className="split-panel-side">
+        <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+          <div style={{ fontSize: "52px", marginBottom: "20px" }}>🚀</div>
+          <h2 style={{ fontSize: "34px", fontWeight: "900", color: "#fff", lineHeight: 1.2, marginBottom: "14px", fontFamily: "'Outfit',sans-serif", letterSpacing: "-1px" }}>
+            Join 10,000+<br />Happy Travellers
+          </h2>
+          <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", marginBottom: "44px", lineHeight: 1.7 }}>
+            Book smarter, travel better. SkyConnect gives you real-time prices, instant booking, and full trip management.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+            {STEPS_INFO.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{
+                  width: "38px", height: "38px", borderRadius: "10px", flexShrink: 0,
+                  background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px"
+                }}>{s.icon}</div>
+                <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>{s.text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
