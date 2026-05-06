@@ -54,44 +54,15 @@ public class BookingServiceImplementation implements BookingService {
 		log.info("Creating booking — userId: {} flightId: {} class: {}", request.getUserId(), flightId,
 				request.getSeatClass());
 
-		List<Booking> existingBookings = bookingRepository.findByUserIdAndFlightIdAndStatusNot(request.getUserId(),
-				flightId, BookingStatus.CANCELLED);
-
-		for (Booking existing : existingBookings) {
-			for (BookingPassenger ep : existing.getPassengers()) {
-				for (PassengerRequest rp : request.getPassengers()) {
-					if (ep.getFirstName().equalsIgnoreCase(rp.getFirstName())
-							&& ep.getLastName().equalsIgnoreCase(rp.getLastName())) {
-						log.warn("Duplicate passenger attempt — passenger: {} {}", rp.getFirstName(), rp.getLastName());
-						throw new DuplicateBookingException("Passenger " + rp.getFirstName() + " " + rp.getLastName()
-								+ " is already booked on this flight.");
-					}
-				}
-			}
-		}
+		validateDuplicateBookings(flightId, request);
 
 		FlightResponse flight = flightServiceClient.getFlightById(flightId);
-
-		if (!"ACTIVE".equals(flight.getStatus())) {
-			throw new FlightNotActiveException("Flight " + flightId + " is not active");
-		}
-
 		SeatClass selectedClass = SeatClass.valueOf(request.getSeatClass().toUpperCase());
 		int numberOfSeats = request.getPassengers().size();
 
-		int availableInClass = (selectedClass == SeatClass.ECONOMY) ? flight.getEconomySeats()
-				: flight.getBusinessSeats();
-		if (availableInClass < numberOfSeats) {
-			throw new InsufficientSeatsException("Only " + availableInClass + " seats available in " + selectedClass);
-		}
+		validateFlightAvailability(flight, flightId, selectedClass, numberOfSeats);
 
-		BigDecimal unitPrice = flight.getTicketCost();
-		if (selectedClass == SeatClass.BUSINESS) {
-			unitPrice = unitPrice.multiply(BigDecimal.valueOf(1.5));
-			log.debug("Business class pricing applied (1.5x) — unitPrice: {}", unitPrice);
-		}
-
-		BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(numberOfSeats));
+		BigDecimal totalPrice = calculateTotalPrice(flight, selectedClass, numberOfSeats);
 
 		Booking booking = Booking.builder().bookingReference(generateBookingReference()).userId(request.getUserId())
 				.flightId(flightId).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
@@ -212,36 +183,77 @@ public class BookingServiceImplementation implements BookingService {
 				.cancelledAt(LocalDateTime.now()).build();
 	}
 
+	private void validateDuplicateBookings(Long flightId, CreateBookingRequest request) {
+		List<Booking> existingBookings = bookingRepository.findByUserIdAndFlightIdAndStatusNot(request.getUserId(),
+				flightId, BookingStatus.CANCELLED);
+
+		for (Booking existing : existingBookings) {
+			for (BookingPassenger ep : existing.getPassengers()) {
+				checkPassengerOverlap(ep, request.getPassengers());
+			}
+		}
+	}
+
+	private void checkPassengerOverlap(BookingPassenger ep, List<PassengerRequest> requestedPassengers) {
+		for (PassengerRequest rp : requestedPassengers) {
+			if (ep.getFirstName().equalsIgnoreCase(rp.getFirstName())
+					&& ep.getLastName().equalsIgnoreCase(rp.getLastName())) {
+				log.warn("Duplicate passenger attempt — passenger: {} {}", rp.getFirstName(), rp.getLastName());
+				throw new DuplicateBookingException("Passenger " + rp.getFirstName() + " " + rp.getLastName()
+						+ " is already booked on this flight.");
+			}
+		}
+	}
+
+	private void validateFlightAvailability(FlightResponse flight, Long flightId, SeatClass selectedClass,
+			int numberOfSeats) {
+		if (!"ACTIVE".equals(flight.getStatus())) {
+			throw new FlightNotActiveException("Flight " + flightId + " is not active");
+		}
+
+		int availableInClass = (selectedClass == SeatClass.ECONOMY) ? flight.getEconomySeats()
+				: flight.getBusinessSeats();
+		if (availableInClass < numberOfSeats) {
+			throw new InsufficientSeatsException("Only " + availableInClass + " seats available in " + selectedClass);
+		}
+	}
+
+	private BigDecimal calculateTotalPrice(FlightResponse flight, SeatClass selectedClass, int numberOfSeats) {
+		BigDecimal unitPrice = flight.getTicketCost();
+		if (selectedClass == SeatClass.BUSINESS) {
+			unitPrice = unitPrice.multiply(BigDecimal.valueOf(1.5));
+			log.debug("Business class pricing applied (1.5x) — unitPrice: {}", unitPrice);
+		}
+		return unitPrice.multiply(BigDecimal.valueOf(numberOfSeats));
+	}
+
 	private String generateBookingReference() {
 		return "FLY" + UUID.randomUUID().toString().replace("-", "").substring(0, 7).toUpperCase();
 	}
 
-	private MealPreference parseMealPreference(String value) {
-		if (value == null)
-			return MealPreference.NONE;
+	private MealPreference parseMealPreference(String preference) {
 		try {
-			return MealPreference.valueOf(value.toUpperCase());
+			return (preference == null) ? MealPreference.NONE : MealPreference.valueOf(preference.toUpperCase());
 		} catch (IllegalArgumentException e) {
 			return MealPreference.NONE;
 		}
 	}
 
 	private BookingResponse mapToResponse(Booking booking) {
-		List<PassengerResponse> passengers = booking.getPassengers().stream().map(this::mapToPassengerResponse)
-				.toList();
-
 		return BookingResponse.builder().bookingId(booking.getBookingId())
-				.bookingReference(booking.getBookingReference()).flightId(booking.getFlightId())
-				.userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())
+				.bookingReference(booking.getBookingReference()).userId(booking.getUserId())
+				.flightId(booking.getFlightId()).numberOfSeats(booking.getNumberOfSeats())
+				.totalPrice(booking.getTotalPrice()).bookingTime(booking.getBookingTime())
+				.departureTime(booking.getDepartureTime()).status(booking.getStatus())
 				.seatClass(booking.getSeatClass() != null ? booking.getSeatClass().name() : null)
-				.departureTime(booking.getDepartureTime()).totalPrice(booking.getTotalPrice())
-				.status(booking.getStatus()).bookingTime(booking.getBookingTime()).passengers(passengers).build();
-	}
-
-	private PassengerResponse mapToPassengerResponse(BookingPassenger p) {
-		return PassengerResponse.builder().passengerId(p.getPassengerId()).firstName(p.getFirstName())
-				.lastName(p.getLastName()).passportNumber(p.getPassportNumber()).gender(p.getGender()).age(p.getAge())
-				.dateOfBirth(p.getDateOfBirth())
-				.mealPreference(p.getMealPreference() != null ? p.getMealPreference().name() : null).build();
+				.passengers(booking.getPassengers().stream()
+						.map(p -> PassengerResponse.builder().passengerId(p.getPassengerId())
+								.firstName(p.getFirstName()).lastName(p.getLastName())
+								.passportNumber(p.getPassportNumber()).gender(p.getGender()).age(p.getAge())
+								.dateOfBirth(p.getDateOfBirth())
+								.mealPreference(p.getMealPreference() != null ? p.getMealPreference().name() : null)
+								.build())
+						.toList())
+				.build();
 	}
 }
