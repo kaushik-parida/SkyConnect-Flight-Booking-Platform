@@ -14,6 +14,7 @@ import com.flightapp.booking.client.FlightServiceClient;
 import com.flightapp.booking.dto.BookingResponse;
 import com.flightapp.booking.dto.CancelBookingResponse;
 import com.flightapp.booking.dto.CreateBookingRequest;
+import com.flightapp.booking.dto.PassengerRequest;
 import com.flightapp.booking.dto.PassengerResponse;
 import com.flightapp.booking.dto.external.FlightResponse;
 import com.flightapp.booking.exception.BookingAlreadyCancelledException;
@@ -53,12 +54,20 @@ public class BookingServiceImplementation implements BookingService {
 		log.info("Creating booking — userId: {} flightId: {} class: {}", request.getUserId(), flightId,
 				request.getSeatClass());
 
-		boolean duplicateExists = bookingRepository.existsByUserIdAndFlightIdAndStatusNot(request.getUserId(), flightId,
-				BookingStatus.CANCELLED);
+		List<Booking> existingBookings = bookingRepository.findByUserIdAndFlightIdAndStatusNot(request.getUserId(),
+				flightId, BookingStatus.CANCELLED);
 
-		if (duplicateExists) {
-			log.warn("Duplicate booking attempt — userId: {} flightId: {}", request.getUserId(), flightId);
-			throw new DuplicateBookingException("An active booking already exists for this flight and user");
+		for (Booking existing : existingBookings) {
+			for (BookingPassenger ep : existing.getPassengers()) {
+				for (PassengerRequest rp : request.getPassengers()) {
+					if (ep.getFirstName().equalsIgnoreCase(rp.getFirstName())
+							&& ep.getLastName().equalsIgnoreCase(rp.getLastName())) {
+						log.warn("Duplicate passenger attempt — passenger: {} {}", rp.getFirstName(), rp.getLastName());
+						throw new DuplicateBookingException("Passenger " + rp.getFirstName() + " " + rp.getLastName()
+								+ " is already booked on this flight.");
+					}
+				}
+			}
 		}
 
 		FlightResponse flight = flightServiceClient.getFlightById(flightId);
@@ -83,10 +92,11 @@ public class BookingServiceImplementation implements BookingService {
 		}
 
 		BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(numberOfSeats));
-		
+
 		Booking booking = Booking.builder().bookingReference(generateBookingReference()).userId(request.getUserId())
 				.flightId(flightId).numberOfSeats(numberOfSeats).totalPrice(totalPrice)
-				.departureTime(flight.getDepartureTime()).seatClass(selectedClass).status(BookingStatus.PENDING).build();
+				.departureTime(flight.getDepartureTime()).seatClass(selectedClass).status(BookingStatus.PENDING)
+				.build();
 
 		request.getPassengers().forEach(p -> {
 			BookingPassenger passenger = BookingPassenger.builder().firstName(p.getFirstName())
@@ -110,7 +120,7 @@ public class BookingServiceImplementation implements BookingService {
 			saved.getPayment().setPaidAt(LocalDateTime.now());
 			bookingRepository.save(saved);
 			log.info("Booking confirmed — ref: {}", saved.getBookingReference());
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			log.warn("Seat reduction failed — booking stays PENDING ref: {} reason: {}", saved.getBookingReference(),
 					e.getMessage());
 		}
@@ -192,7 +202,7 @@ public class BookingServiceImplementation implements BookingService {
 
 		try {
 			flightServiceClient.restoreSeats(booking.getFlightId(), booking.getNumberOfSeats(), booking.getSeatClass());
-		} catch (RuntimeException e) {
+		} catch (Exception e) {
 			log.warn("Seat restoration failed — ref: {} reason: {}", booking.getBookingReference(), e.getMessage());
 		}
 
@@ -223,6 +233,7 @@ public class BookingServiceImplementation implements BookingService {
 		return BookingResponse.builder().bookingId(booking.getBookingId())
 				.bookingReference(booking.getBookingReference()).flightId(booking.getFlightId())
 				.userId(booking.getUserId()).numberOfSeats(booking.getNumberOfSeats())
+				.seatClass(booking.getSeatClass() != null ? booking.getSeatClass().name() : null)
 				.departureTime(booking.getDepartureTime()).totalPrice(booking.getTotalPrice())
 				.status(booking.getStatus()).bookingTime(booking.getBookingTime()).passengers(passengers).build();
 	}
