@@ -21,3 +21,14 @@ exports.register = async (request, response) => {
     response.status(status).json({ message });
   }
 };
+
+exports.getAllUsers = async (request, response) => {
+  try {
+    const data = await authService.getAllUsers();
+    response.json(data);
+  } catch (error) {
+    const status = error.response?.status || 500;
+    const message = error.response?.data?.message || "Failed to fetch users";
+    response.status(status).json({ message });
+  }
+};
