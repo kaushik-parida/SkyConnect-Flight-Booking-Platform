@@ -24,26 +24,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
-	private final AuthService authService;
+    private final AuthService authService;
 
-	
-	@PostMapping("/register")
-	public ResponseEntity<CommonResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request) {
+    @PostMapping("/register")
+    public ResponseEntity<CommonResponse<SignupResponse>> register(
+            @Valid @RequestBody SignupRequest request) {
 
-		return ResponseEntity.ok(authService.register(request));
-	}
+        return ResponseEntity.ok(authService.register(request));
+    }
 
-	
-	@PostMapping("/login")
-	public ResponseEntity<CommonResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+    @PostMapping("/login")
+    public ResponseEntity<CommonResponse<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest request) {
 
-		return ResponseEntity.ok(authService.login(request));
-	}
+        return ResponseEntity.ok(authService.login(request));
+    }
 
-	
-	@GetMapping("/users/{userId}")
-	public ResponseEntity<UserResponse> getUserById(@PathVariable String userId) {
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<UserResponse> getUserById(
+            @PathVariable String userId) {
 
-		return ResponseEntity.ok(authService.getUserById(userId));
-	}
+        return ResponseEntity.ok(authService.getUserById(userId));
+    }
 }
