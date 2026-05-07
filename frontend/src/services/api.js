@@ -82,13 +82,23 @@ export const getTicketByPnr = async (pnr) => {
   return response.data;
 };
 
+export const getBookingById = async (id) => {
+  const response = await api.get(`/api/v1.0/flight/booking/${id}`);
+  return response.data;
+};
+
 export const getBookingHistory = async (userId, page = 0, size = 10) => {
   const response = await api.get(`/api/v1.0/flight/booking/history/${userId}`, { params: { page, size } });
   return response.data;
 };
 
 export const cancelBooking = async (pnr, userId) => {
-  const response = await api.patch(`/api/v1.0/flight/booking/cancel/${pnr}`, null, { params: { userId } });
+  const response = await api.patch(`/api/v1.0/flight/booking/cancel/${pnr}?userId=${userId}`);
+  return response.data;
+};
+
+export const cancelPassengerBookings = async (pnr, passengerIds, userId) => {
+  const response = await api.patch(`/api/v1.0/flight/booking/cancel/${pnr}/passengers?userId=${userId}`, passengerIds);
   return response.data;
 };
 

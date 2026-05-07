@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { getBookingHistory, cancelBooking, getFlightById } from "../../services/api";
+import { getBookingHistory, cancelBooking, cancelPassengerBookings, getFlightById } from "../../services/api";
 import { formatDate } from "../../utils/dateUtils";
 
 export default function BookingHistoryPage() {
@@ -11,7 +11,9 @@ export default function BookingHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
   const [showFaq, setShowFaq] = useState(false);
+  const [selectedPassengersToCancel, setSelectedPassengersToCancel] = useState([]);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = "success") => {
@@ -25,7 +27,6 @@ export default function BookingHistoryPage() {
     try {
       const data = await getBookingHistory(userId);
       const bookingsList = data.content || [];
-
       const enrichedBookings = await Promise.all(
         bookingsList.map(async (b) => {
           if (!b.flightId) return b;
@@ -39,15 +40,13 @@ export default function BookingHistoryPage() {
               arrivalTime: flight.arrivalTime,
               departureTime: flight.departureTime || b.departureTime
             };
-          } catch (e) {
-            console.error(`Failed to fetch flight details for flightId ${b.flightId}:`, e.response?.data || e.message);
+          } catch {
             return b;
           }
         })
       );
-
       setBookings(enrichedBookings);
-    } catch (err) {
+    } catch {
       showToast("Failed to load booking history", "error");
     } finally {
       setLoading(false);
@@ -56,16 +55,38 @@ export default function BookingHistoryPage() {
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
+  const openCancelModal = (b) => {
+    setCancelError("");
+    setCancelTarget(b);
+    if (b.passengers) {
+      setSelectedPassengersToCancel(b.passengers.map(p => p.passengerId));
+    } else {
+      setSelectedPassengersToCancel([]);
+    }
+  };
+
+  const handlePassengerToggle = (passengerId) => {
+    setSelectedPassengersToCancel(prev => 
+      prev.includes(passengerId) ? prev.filter(id => id !== passengerId) : [...prev, passengerId]
+    );
+  };
+
   const handleCancel = async () => {
-    if (!cancelTarget) return;
+    if (!cancelTarget || selectedPassengersToCancel.length === 0) return;
     setCancelling(true);
+    setCancelError("");
     try {
-      await cancelBooking(cancelTarget.bookingReference, userId);
-      showToast("Booking cancelled successfully");
+      if (cancelTarget.passengers && selectedPassengersToCancel.length < cancelTarget.passengers.length) {
+        await cancelPassengerBookings(cancelTarget.bookingReference, selectedPassengersToCancel, userId);
+        showToast(`Successfully cancelled ${selectedPassengersToCancel.length} passenger(s)`);
+      } else {
+        await cancelBooking(cancelTarget.bookingReference, userId);
+        showToast("Booking cancelled successfully");
+      }
       setCancelTarget(null);
       loadHistory();
     } catch (err) {
-      showToast(err.response?.data?.message || "Cancellation failed", "error");
+      setCancelError(err.response?.data?.message || "Cancellation failed. Please try again.");
     } finally {
       setCancelling(false);
     }
@@ -79,26 +100,23 @@ export default function BookingHistoryPage() {
   };
 
   return (
-    <div className="app-container" style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+    <div className="app-container page-fixed-height">
       <Navbar />
 
       {toast && (
-        <div
-          className={`badge badge-${toast.type === "error" ? "danger" : "success"}`}
-          style={{ position: "fixed", top: "90px", right: "32px", zIndex: 1000, padding: "12px 24px", boxShadow: "var(--shadow-md)", borderRadius: "12px" }}
-        >
+        <div className={`toast-notification badge badge-${toast.type === "error" ? "danger" : "success"}`}>
           {toast.msg}
         </div>
       )}
 
-      <main className="scroll-area" style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div className="container" style={{ maxWidth: "1440px", width: "95%", flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", paddingBottom: "24px" }}>
+      <main className="scroll-area page-main">
+        <div className="container page-container">
 
-          <div className="animate-slide-up" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "24px", flexShrink: 0, marginTop: "24px" }}>
+          <div className="animate-slide-up page-header-row">
             <div>
-              <div className="badge badge-accent" style={{ marginBottom: "12px", background: "rgba(30,58,138,0.2)", color: "#1E3A8A", borderColor: "rgba(30,58,138,0.5)" }}>My Account</div>
-              <h1 style={{ fontSize: "32px", fontWeight: "800", color: "var(--text-heading)", marginBottom: "4px" }}>My Bookings</h1>
-              <p style={{ color: "var(--text-dim)" }}>Manage your upcoming and past flight reservations.</p>
+              <div className="badge badge-accent mb-12">My Account</div>
+              <h1 className="page-title">My Bookings</h1>
+              <p className="page-subtitle">Manage your upcoming and past flight reservations.</p>
             </div>
             <button className="btn btn-primary" onClick={() => navigate("/")}>
               ✈ Book New Flight
@@ -106,93 +124,90 @@ export default function BookingHistoryPage() {
           </div>
 
           {loading ? (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "100px 0" }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.4 }}>✈</div>
-                <div style={{ color: "var(--text-muted)", fontWeight: "600" }}>Loading your reservations...</div>
-              </div>
+            <div className="empty-state-center">
+              <div className="empty-state-icon">✈</div>
+              <div className="empty-state-text">Loading your reservations...</div>
             </div>
           ) : bookings.length === 0 ? (
-            <div className="glass-card animate-scale-in" style={{ padding: "80px", textAlign: "center" }}>
-              <div style={{ fontSize: "64px", marginBottom: "20px" }}>🎫</div>
-              <h2 style={{ marginBottom: "12px", color: "var(--text-heading)" }}>No Bookings Yet</h2>
-              <p style={{ color: "var(--text-dim)", marginBottom: "32px", maxWidth: "340px", margin: "0 auto 32px" }}>
+            <div className="glass-card animate-scale-in empty-card">
+              <div className="empty-icon">🎫</div>
+              <h2 className="empty-title">No Bookings Yet</h2>
+              <p className="empty-desc">
                 You haven't made any flight reservations yet. Start your journey today!
               </p>
               <button className="btn btn-primary" onClick={() => navigate("/")}>Search Flights</button>
             </div>
           ) : (
-            <div style={{ display: "flex", gap: "32px", alignItems: "flex-start", flex: 1, minHeight: 0 }}>
+            <div className="history-layout">
 
-              <div style={{ flex: "7", display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto", height: "100%", paddingRight: "12px" }}>
+              <div className="bookings-list">
                 {bookings.map((b, i) => (
                   <div
                     key={b.bookingId}
-                    className="glass-card glass-card-hover animate-slide-up"
-                    style={{
-                      padding: "24px 28px", animationDelay: `${i * 60}ms`, animationFillMode: "both",
-                      opacity: b.status === "CANCELLED" ? 0.6 : 1,
-                      filter: b.status === "CANCELLED" ? "grayscale(80%)" : "none"
-                    }}
+                    className={`glass-card glass-card-hover animate-slide-up booking-card ${b.status === "CANCELLED" ? "booking-card-cancelled" : ""}`}
+                    style={{ animationDelay: `${i * 60}ms`, animationFillMode: "both" }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "16px", fontWeight: "800", color: "var(--accent)", fontFamily: "'Outfit',sans-serif" }}>
-                            PNR: {b.bookingReference}
-                          </span>
+                    <div className="booking-card-inner">
+                      <div className="booking-card-main">
+                        <div className="booking-ref-row">
+                          <span className="booking-ref-text">PNR: {b.bookingReference}</span>
                           <span className={`badge badge-${b.status === "CONFIRMED" ? "success" : b.status === "CANCELLED" ? "danger" : "warning"}`}>
                             {b.status}
                           </span>
                         </div>
 
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }}>
+                        <div className="booking-details-grid">
                           <div>
-                            <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px", fontWeight: "700" }}>Flight</div>
-                            <div style={{ fontWeight: "800", color: "var(--text-heading)", fontSize: "15px" }}>{b.flightNumber || "—"}</div>
+                            <div className="detail-label">Flight</div>
+                            <div className="detail-value">{b.flightNumber || "—"}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px", fontWeight: "700" }}>Route</div>
-                            <div style={{ fontWeight: "800", color: "var(--text-heading)", fontSize: "15px" }}>
+                            <div className="detail-label">Route</div>
+                            <div className="detail-value">
                               {b.fromPlace && b.toPlace ? `${b.fromPlace} → ${b.toPlace}` : "—"}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px", fontWeight: "700" }}>Class</div>
-                            <div style={{ fontWeight: "800", color: "var(--text-heading)", fontSize: "15px" }}>{b.seatClass || "—"}</div>
+                            <div className="detail-label">Class</div>
+                            <div className="detail-value">{b.seatClass || "—"}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "3px", fontWeight: "700" }}>Booked On</div>
-                            <div style={{ fontWeight: "800", color: "var(--text-heading)", fontSize: "15px" }}>{formatDate(b.bookingTime)}</div>
+                            <div className="detail-label">Booked On</div>
+                            <div className="detail-value">{formatDate(b.bookingTime)}</div>
                           </div>
                         </div>
                       </div>
 
-                      <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-end", flexShrink: 0 }}>
+                      <div className="booking-card-actions">
                         <div>
-                          <div style={{ fontSize: "10px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "2px", fontWeight: "700" }}>Amount Paid</div>
-                          <div style={{ fontSize: "20px", fontWeight: "900", color: "var(--success)", fontFamily: "'Outfit',sans-serif" }}>
-                            {displayAmount(b)}
-                          </div>
+                          <div className="detail-label">Amount Paid</div>
+                          <div className="booking-amount">{displayAmount(b)}</div>
                         </div>
 
                         {b.status === "CONFIRMED" && (
-                          <div style={{ display: "flex", gap: "8px" }}>
+                          <div className="booking-action-buttons">
                             <button
-                              className="btn btn-primary"
-                              style={{ padding: "6px 12px", fontSize: "12px", minWidth: "140px" }}
+                              className="btn btn-primary btn-sm"
                               onClick={() => {
-                                const flightData = b.flightNumber ? { flightNumber: b.flightNumber, fromPlace: b.fromPlace, toPlace: b.toPlace, departureTime: b.departureTime, arrivalTime: b.arrivalTime } : { flightNumber: "UNKNOWN", fromPlace: "—", toPlace: "—", departureTime: b.departureTime };
-                                navigate("/boarding-pass", { state: { bookingId: b.bookingReference, flight: flightData, seatClass: b.seatClass || "ECONOMY", totalAmount: b.totalPrice, passenger: b.passengers?.[0] } });
+                                const flightData = b.flightNumber
+                                  ? { flightNumber: b.flightNumber, fromPlace: b.fromPlace, toPlace: b.toPlace, departureTime: b.departureTime, arrivalTime: b.arrivalTime }
+                                  : { flightNumber: "UNKNOWN", fromPlace: "—", toPlace: "—", departureTime: b.departureTime };
+                                navigate("/boarding-pass", {
+                                  state: {
+                                    bookingId: b.bookingReference,
+                                    flight: flightData,
+                                    seatClass: b.seatClass || "ECONOMY",
+                                    totalAmount: b.totalPrice,
+                                    passengers: b.passengers || []
+                                  }
+                                });
                               }}
                             >
                               🎫 Boarding Pass
                             </button>
                             <button
-                              className="btn btn-ghost"
-                              style={{ padding: "6px 12px", fontSize: "12px", color: "var(--danger)", background: "rgba(220,38,38,0.05)" }}
-                              onClick={() => setCancelTarget(b)}
+                              className="btn btn-ghost btn-sm btn-cancel"
+                              onClick={() => openCancelModal(b)}
                             >
                               Cancel
                             </button>
@@ -204,23 +219,23 @@ export default function BookingHistoryPage() {
                 ))}
               </div>
 
-              <div style={{ flex: "3", height: "100%" }}>
-                <div className="glass-card animate-slide-up" style={{ padding: "32px", height: "100%", display: "flex", flexDirection: "column" }}>
-                  <h3 style={{ fontSize: "20px", fontWeight: "800", color: "var(--text-heading)", marginBottom: "24px", flexShrink: 0 }}>Travel Hub</h3>
+              <div className="history-sidebar">
+                <div className="glass-card animate-slide-up travel-hub-card">
+                  <h3 className="hub-title">Travel Hub</h3>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "20px", flex: 1, overflowY: "auto" }}>
-                    <div style={{ background: "rgba(37,99,235,0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(37,99,235,0.15)" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "var(--info)", marginBottom: "8px" }}>Check-In Open</div>
-                      <p style={{ fontSize: "13px", color: "var(--text-dim)", margin: 0, lineHeight: 1.5 }}>Web check-in opens 48 hours before your flight. Secure your preferred seat early!</p>
+                  <div className="hub-items">
+                    <div className="hub-item hub-item-info">
+                      <div className="hub-item-title hub-item-title-info">Check-In Open</div>
+                      <p className="hub-item-desc">Web check-in opens 48 hours before your flight. Secure your preferred seat early!</p>
                     </div>
 
-                    <div style={{ background: "rgba(215,119,0,0.05)", padding: "16px", borderRadius: "12px", border: "1px solid rgba(215,119,0,0.15)" }}>
-                      <div style={{ fontSize: "14px", fontWeight: "800", color: "var(--warning)", marginBottom: "8px" }}>Baggage Allowance</div>
-                      <p style={{ fontSize: "13px", color: "var(--text-dim)", margin: 0, lineHeight: 1.5 }}>Carry-on: 7kg limit. Checked baggage depends on your selected fare class.</p>
+                    <div className="hub-item hub-item-warning">
+                      <div className="hub-item-title hub-item-title-warning">Baggage Allowance</div>
+                      <p className="hub-item-desc">Carry-on: 7kg limit. Checked baggage depends on your selected fare class.</p>
                     </div>
                   </div>
 
-                  <div style={{ borderTop: "1px solid var(--glass-border)", paddingTop: "20px", marginTop: "16px", flexShrink: 0 }}>
+                  <div className="hub-actions">
                     <button className="btn btn-primary" onClick={() => navigate("/")} style={{ width: "100%" }}>
                       Book New Flight
                     </button>
@@ -237,25 +252,51 @@ export default function BookingHistoryPage() {
       </main>
 
       {cancelTarget && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div className="glass-card animate-slide-up" style={{ padding: "40px", maxWidth: "440px", textAlign: "center", borderTop: "4px solid var(--danger)" }}>
-            <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
-            <h3 style={{ fontSize: "24px", color: "var(--text-heading)", marginBottom: "16px" }}>Cancel Reservation</h3>
-            <p style={{ color: "var(--text-dim)", marginBottom: "32px", fontSize: "15px", lineHeight: "1.6" }}>
+        <div className="modal-overlay">
+          <div className="glass-card animate-slide-up modal-card modal-card-danger">
+            <div className="modal-icon">⚠️</div>
+            <h3 className="modal-title">Cancel Reservation</h3>
+            <p className="modal-desc">
               Are you sure you want to cancel your booking <strong>{cancelTarget.bookingReference}</strong>? This action cannot be undone and refunds may take 5-7 business days.
             </p>
-            <div style={{ display: "flex", gap: "12px" }}>
+
+            {cancelTarget.passengers && cancelTarget.passengers.length > 1 && (
+              <div style={{ marginTop: "16px", marginBottom: "16px", textAlign: "left" }}>
+                <label className="detail-label">Select passengers to cancel:</label>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                  {cancelTarget.passengers.map(p => (
+                    <label key={p.passengerId} style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedPassengersToCancel.includes(p.passengerId)}
+                        onChange={() => handlePassengerToggle(p.passengerId)}
+                        style={{ width: "16px", height: "16px", accentColor: "#ef4444" }}
+                      />
+                      <span style={{ fontSize: "14px", color: "var(--text-main)" }}>
+                        {p.firstName} {p.lastName}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {cancelError && (
+              <div className="modal-error-box">
+                ⚠ {cancelError}
+              </div>
+            )}
+
+            <div className="modal-actions">
               <button
-                className="btn btn-danger"
-                style={{ flex: 1, padding: "14px", fontSize: "14px" }}
+                className="btn btn-danger modal-btn"
                 onClick={handleCancel}
-                disabled={cancelling}
+                disabled={cancelling || selectedPassengersToCancel.length === 0}
               >
-                {cancelling ? "Cancelling..." : "Yes, Cancel Booking"}
+                {cancelling ? "Cancelling..." : selectedPassengersToCancel.length > 0 && cancelTarget.passengers && selectedPassengersToCancel.length < cancelTarget.passengers.length ? `Cancel ${selectedPassengersToCancel.length} Passenger(s)` : "Yes, Cancel Booking"}
               </button>
               <button
-                className="btn btn-ghost"
-                style={{ flex: 1, padding: "14px", fontSize: "14px" }}
+                className="btn btn-ghost modal-btn"
                 onClick={() => setCancelTarget(null)}
                 disabled={cancelling}
               >
@@ -267,33 +308,31 @@ export default function BookingHistoryPage() {
       )}
 
       {showFaq && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.8)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
-          <div className="glass-card animate-scale-in" style={{ padding: "40px", maxWidth: "600px", width: "100%", borderTop: "4px solid var(--accent)", position: "relative" }}>
+        <div className="modal-overlay">
+          <div className="glass-card animate-scale-in modal-card modal-card-accent modal-card-relative">
             <button
               onClick={() => setShowFaq(false)}
-              style={{ position: "absolute", top: "24px", right: "24px", background: "transparent", border: "none", fontSize: "20px", cursor: "pointer", color: "var(--text-muted)" }}
+              className="modal-close-btn"
             >
               ✕
             </button>
-            <h3 style={{ fontSize: "24px", color: "var(--text-heading)", marginBottom: "8px", fontWeight: "800" }}>Support & FAQs</h3>
-            <p style={{ color: "var(--text-dim)", marginBottom: "32px" }}>Find quick answers to common flight booking questions.</p>
+            <h3 className="modal-title">Support & FAQs</h3>
+            <p className="modal-subtitle">Find quick answers to common flight booking questions.</p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px", maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
+            <div className="faq-list">
               <div>
-                <h4 style={{ fontSize: "16px", color: "var(--text-main)", marginBottom: "8px", fontWeight: "700" }}>How do I cancel a flight?</h4>
-                <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.6", margin: 0 }}>You can cancel your flight directly from the 'My Bookings' page by clicking the 'Cancel' button next to an active booking. Cancellations are allowed up to 24 hours before departure.</p>
+                <h4 className="faq-question">How do I cancel a flight?</h4>
+                <p className="faq-answer">You can cancel your flight directly from the 'My Bookings' page by clicking the 'Cancel' button next to an active booking. Cancellations are allowed up to 24 hours before departure.</p>
               </div>
-              <div style={{ height: "1px", background: "var(--glass-border)" }} />
-
+              <div className="divider" />
               <div>
-                <h4 style={{ fontSize: "16px", color: "var(--text-main)", marginBottom: "8px", fontWeight: "700" }}>When will I receive my refund?</h4>
-                <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.6", margin: 0 }}>Refunds for cancelled flights are automatically processed to the original payment method and typically reflect in your account within 5-7 business days.</p>
+                <h4 className="faq-question">When will I receive my refund?</h4>
+                <p className="faq-answer">Refunds for cancelled flights are automatically processed to the original payment method and typically reflect in your account within 5-7 business days.</p>
               </div>
-              <div style={{ height: "1px", background: "var(--glass-border)" }} />
-
+              <div className="divider" />
               <div>
-                <h4 style={{ fontSize: "16px", color: "var(--text-main)", marginBottom: "8px", fontWeight: "700" }}>Can I change my seat class?</h4>
-                <p style={{ fontSize: "14px", color: "var(--text-dim)", lineHeight: "1.6", margin: 0 }}>Currently, seat class modifications are not supported post-booking. You will need to cancel your existing reservation and book a new flight with the desired class.</p>
+                <h4 className="faq-question">Can I change my seat class?</h4>
+                <p className="faq-answer">Currently, seat class modifications are not supported post-booking. You will need to cancel your existing reservation and book a new flight with the desired class.</p>
               </div>
             </div>
 
