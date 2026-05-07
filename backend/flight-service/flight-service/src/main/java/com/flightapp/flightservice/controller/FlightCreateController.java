@@ -1,10 +1,10 @@
 package com.flightapp.flightservice.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +32,6 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1.0/flights")
 @RequiredArgsConstructor
 @Tag(name = "Flight Management", description = "APIs for managing flights")
-@CrossOrigin(origins = "http://localhost:3000")
 public class FlightCreateController {
 	private final FlightCreateService flightCreateService;
 	private final FlightSearchService flightSearchService;
@@ -64,7 +63,7 @@ public class FlightCreateController {
 
 	@Operation(summary = "Get all flights", description = "Allows admin users to see all flights in the system")
 	@GetMapping
-	public ResponseEntity<java.util.List<FlightResponse>> getAllFlights(
+	public ResponseEntity<List<FlightResponse>> getAllFlights(
 			@Parameter(description = "User role forwarded by API Gateway", example = "ADMIN") @RequestHeader(value = AppConstants.USER_ROLE_HEADER, required = false) String userRole) {
 		if (userRole == null || !AppConstants.ADMIN_ROLE.equalsIgnoreCase(userRole)) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

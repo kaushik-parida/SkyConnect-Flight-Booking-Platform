@@ -1,5 +1,7 @@
 package com.flightapp.flightservice.service;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,6 +97,9 @@ public class FlightCreateServiceImplementation implements FlightCreateService {
 
 		if (request.getFromPlace().trim().equalsIgnoreCase(request.getToPlace().trim())) {
 			throw new IllegalArgumentException("Source and destination cannot be the same");
+		} 
+		if (request.getDepartureTime().isBefore(LocalDateTime.now())) {
+			throw new IllegalArgumentException("Departure time cannot be in the past");
 		}
 
 		if (!request.getArrivalTime().isAfter(request.getDepartureTime())) {

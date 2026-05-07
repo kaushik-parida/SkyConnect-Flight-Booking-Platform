@@ -70,8 +70,13 @@ class FlightCreateServiceImplementationTest {
 	@Test
 	void createFlight_shouldThrowException_whenArrivalIsBeforeDeparture() {
 		FlightCreateRequest request = validRequest();
-		request.setDepartureTime(LocalDateTime.of(2026, 5, 1, 12, 0));
-		request.setArrivalTime(LocalDateTime.of(2026, 5, 1, 10, 0));
+
+		LocalDateTime departureTime = LocalDateTime.now().plusDays(10);
+		LocalDateTime arrivalTime = departureTime.minusHours(2);
+
+		request.setDepartureTime(departureTime);
+		request.setArrivalTime(arrivalTime);
+
 		IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
 				() -> flightCreateService.createFlight(request));
 		assertEquals("Arrival time must be after departure time", exception.getMessage());
@@ -110,8 +115,10 @@ class FlightCreateServiceImplementationTest {
 	}
 
 	private FlightCreateRequest validRequest() {
+		LocalDateTime departureTime = LocalDateTime.now().plusDays(10);
+		LocalDateTime arrivalTime = departureTime.plusHours(2);
 		return FlightCreateRequest.builder().flightNumber("AI301").airlineId(1L).fromPlace("Bangalore").toPlace("Delhi")
-				.departureTime(LocalDateTime.of(2026, 5, 1, 9, 0)).arrivalTime(LocalDateTime.of(2026, 5, 1, 11, 0))
+				.departureTime(departureTime).arrivalTime(arrivalTime)
 				.economySeats(100).businessSeats(20).ticketCost(BigDecimal.valueOf(5000)).mealType(MealType.VEG)
 				.build();
 	}

@@ -36,6 +36,11 @@ export default function AdminPage() {
     departureTime: "", arrivalTime: "", economySeats: "", businessSeats: "",
     ticketCost: "", mealType: "VEG",
   });
+  const getCurrentDateTimeLocal = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+  };
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -113,6 +118,16 @@ export default function AdminPage() {
 
   const handleAddFlight = async (e) => {
     e.preventDefault();
+
+    if (new Date(flightForm.departureTime) < new Date()) {
+      showToast("Departure time cannot be in the past", "error");
+      return;
+    }
+
+    if (new Date(flightForm.arrivalTime) <= new Date(flightForm.departureTime)) {
+      showToast("Arrival time must be after departure time", "error");
+      return;
+    }
     try {
       await addFlight({
         ...flightForm,
@@ -130,9 +145,19 @@ export default function AdminPage() {
 
   const handleUpdateFlight = async (e) => {
     e.preventDefault();
+
+    if (new Date(editingFlight.departureTime) < new Date()) {
+      showToast("Departure time cannot be in the past", "error");
+      return;
+    }
+
+    if (new Date(editingFlight.arrivalTime) <= new Date(editingFlight.departureTime)) {
+      showToast("Arrival time must be after departure time", "error");
+      return;
+    }
     try {
       await updateFlight(editingFlight.flightId, {
-        ...editingFlight,
+        ...editingFlight, mealType: editingFlight.mealType || "VEG",
         departureTime: editingFlight.departureTime.includes("T") ? editingFlight.departureTime + ":00" : editingFlight.departureTime,
         arrivalTime: editingFlight.arrivalTime.includes("T") ? editingFlight.arrivalTime + ":00" : editingFlight.arrivalTime,
       });
@@ -300,13 +325,34 @@ export default function AdminPage() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                       <div className="input-group" style={{ marginBottom: 0 }}>
                         <label className="input-label">Departure</label>
-                        <input className="input-field" type="datetime-local" value={flightForm.departureTime}
-                          onChange={e => setFlightForm({ ...flightForm, departureTime: e.target.value })} style={{ colorScheme: "dark" }} />
+                        <input
+                          className="input-field"
+                          type="datetime-local"
+                          min={getCurrentDateTimeLocal()}
+                          value={flightForm.departureTime}
+                          onChange={e =>
+                            setFlightForm({
+                              ...flightForm,
+                              departureTime: e.target.value,
+                              arrivalTime:
+                                flightForm.arrivalTime && flightForm.arrivalTime <= e.target.value
+                                  ? ""
+                                  : flightForm.arrivalTime
+                            })
+                          }
+                          style={{ colorScheme: "dark" }}
+                        />
                       </div>
                       <div className="input-group" style={{ marginBottom: 0 }}>
                         <label className="input-label">Arrival</label>
-                        <input className="input-field" type="datetime-local" value={flightForm.arrivalTime}
-                          onChange={e => setFlightForm({ ...flightForm, arrivalTime: e.target.value })} style={{ colorScheme: "dark" }} />
+                        <input
+                          className="input-field"
+                          type="datetime-local"
+                          min={flightForm.departureTime || getCurrentDateTimeLocal()}
+                          value={flightForm.arrivalTime}
+                          onChange={e => setFlightForm({ ...flightForm, arrivalTime: e.target.value })}
+                          style={{ colorScheme: "dark" }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -443,14 +489,58 @@ export default function AdminPage() {
             <form onSubmit={handleUpdateFlight}>
               <div className="grid grid-cols-2" style={{ gap: "16px" }}>
                 <div className="input-group">
+                  <label className="input-label">Origin City</label>
+                  <input
+                    className="input-field"
+                    value={editingFlight.fromPlace}
+                    onChange={e =>
+                      setEditingFlight({ ...editingFlight, fromPlace: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label className="input-label">Destination City</label>
+                  <input
+                    className="input-field"
+                    value={editingFlight.toPlace}
+                    onChange={e =>
+                      setEditingFlight({ ...editingFlight, toPlace: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2" style={{ gap: "16px" }}>
+                <div className="input-group">
                   <label className="input-label">Departure</label>
-                  <input className="input-field" type="datetime-local" value={editingFlight.departureTime}
-                    onChange={e => setEditingFlight({ ...editingFlight, departureTime: e.target.value })} style={{ colorScheme: "dark" }} />
+                  <input
+                    className="input-field"
+                    type="datetime-local"
+                    min={getCurrentDateTimeLocal()}
+                    value={editingFlight.departureTime}
+                    onChange={e =>
+                      setEditingFlight({
+                        ...editingFlight,
+                        departureTime: e.target.value,
+                        arrivalTime:
+                          editingFlight.arrivalTime && editingFlight.arrivalTime <= e.target.value
+                            ? ""
+                            : editingFlight.arrivalTime
+                      })
+                    }
+                    style={{ colorScheme: "dark" }}
+                  />
                 </div>
                 <div className="input-group">
                   <label className="input-label">Arrival</label>
-                  <input className="input-field" type="datetime-local" value={editingFlight.arrivalTime}
-                    onChange={e => setEditingFlight({ ...editingFlight, arrivalTime: e.target.value })} style={{ colorScheme: "dark" }} />
+                  <input
+                    className="input-field"
+                    type="datetime-local"
+                    min={editingFlight.departureTime || getCurrentDateTimeLocal()}
+                    value={editingFlight.arrivalTime}
+                    onChange={e => setEditingFlight({ ...editingFlight, arrivalTime: e.target.value })}
+                    style={{ colorScheme: "dark" }}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2" style={{ gap: "16px" }}>
