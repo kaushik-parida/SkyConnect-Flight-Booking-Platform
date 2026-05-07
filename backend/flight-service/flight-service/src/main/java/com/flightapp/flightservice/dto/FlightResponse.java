@@ -3,6 +3,8 @@ package com.flightapp.flightservice.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.flightapp.flightservice.enums.MealType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,5 +28,6 @@ public class FlightResponse {
     private Integer economySeats;
     private Integer businessSeats;
     private BigDecimal ticketCost;
+    private MealType mealType;
     private String status;
 }

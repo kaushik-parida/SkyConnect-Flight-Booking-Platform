@@ -97,7 +97,7 @@ public class FlightSearchServiceImplementation implements FlightSearchService {
 		return FlightResponse.builder().flightId(flight.getFlightId()).flightNumber(flight.getFlightNumber())
 				.airlineId(flight.getAirlineId()).fromPlace(flight.getFromPlace()).toPlace(flight.getToPlace())
 				.departureTime(flight.getDepartureTime()).arrivalTime(flight.getArrivalTime())
-				.economySeats(economySeats).businessSeats(businessSeats).ticketCost(flight.getTicketCost())
+				.economySeats(economySeats).businessSeats(businessSeats).ticketCost(flight.getTicketCost()).mealType(flight.getMealType())
 				.status(flight.getStatus().name()).build();
 	}
 
