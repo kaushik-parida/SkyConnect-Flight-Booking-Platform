@@ -1,8 +1,13 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import FlightSearch from "../../components/FlightSearch";
+import { useAuth } from "../../context/AuthContext";
 
 export default function UserPage() {
+  const { isAdmin } = useAuth();
+  if (isAdmin) return <Navigate to="/admin" replace />;
+
   return (
     <div className="app-container">
       <Navbar />

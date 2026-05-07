@@ -4,7 +4,17 @@ import Navbar from "../../components/Navbar";
 import { createBooking } from "../../services/api";
 import { formatTime } from "../../utils/dateUtils";
 
-const MEAL_OPTIONS = ["VEG", "NON_VEG", "NONE"];
+const MEAL_OPTIONS = [
+  { value: "VEGETARIAN", label: "Vegetarian", desc: "Plant-based meals" },
+  { value: "NONVEGETARIAN", label: "Non-Vegetarian", desc: "Includes chicken & fish" },
+  { value: "NONE", label: "No Meal", desc: "Skip in-flight meal" },
+];
+
+const PAYMENT_METHODS = [
+  { value: "CARD", label: "Credit / Debit Card", desc: "Visa, Mastercard, Amex" },
+  { value: "UPI", label: "UPI", desc: "GPay, PhonePe, Paytm" },
+  { value: "NETBANKING", label: "Net Banking", desc: "All major Indian banks" },
+];
 
 export default function BookingPage() {
   const { state } = useLocation();
@@ -17,12 +27,10 @@ export default function BookingPage() {
 
   const [passengers, setPassengers] = useState([{
     firstName: "", lastName: "", gender: "MALE",
-    passportNumber: "", dateOfBirth: "", mealPreference: "VEG"
+    passportNumber: "", dateOfBirth: "", mealPreference: "VEGETARIAN"
   }]);
 
-  const [payment, setPayment] = useState({
-    paymentMethod: "CARD",
-  });
+  const [paymentMethod, setPaymentMethod] = useState("CARD");
 
   const updatePassenger = (index, field, value) => {
     const newPassengers = [...passengers];
@@ -33,7 +41,7 @@ export default function BookingPage() {
   const addPassenger = () => {
     setPassengers([...passengers, {
       firstName: "", lastName: "", gender: "MALE",
-      passportNumber: "", dateOfBirth: "", mealPreference: "VEG"
+      passportNumber: "", dateOfBirth: "", mealPreference: "VEGETARIAN"
     }]);
   };
 
@@ -47,9 +55,9 @@ export default function BookingPage() {
     return (
       <div className="app-container">
         <Navbar />
-        <div className="scroll-area" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div className="glass-card" style={{ padding: "40px", textAlign: "center" }}>
-            <h2 style={{ marginBottom: "20px" }}>No Flight Selected</h2>
+        <div className="scroll-area center-content">
+          <div className="glass-card centered-card">
+            <h2 className="mb-20">No Flight Selected</h2>
             <button className="btn btn-primary" onClick={() => navigate("/")}>Go to Search</button>
           </div>
         </div>
@@ -71,13 +79,17 @@ export default function BookingPage() {
     }
     setLoading(true); setError("");
     try {
+      const userId = localStorage.getItem("userId");
       const payload = {
+        userId,
         passengers: passengers.map(p => ({ ...p, age: calculateAge(p.dateOfBirth) })),
-        paymentMethod: payment.paymentMethod,
+        paymentMethod: paymentMethod,
         seatClass: seatClass,
       };
       const bookingId = await createBooking(flight.flightId, payload);
-      navigate("/booking/confirmation", { state: { bookingId, flight, seatClass, totalAmount: price, passenger: passengers[0] } });
+      navigate("/booking/confirmation", {
+        state: { bookingId, flight, seatClass, totalAmount: price, passengers }
+      });
     } catch (err) {
       setError(err.response?.data?.message || "Booking failed. Please try again.");
     } finally {
@@ -93,56 +105,50 @@ export default function BookingPage() {
     <div className="app-container">
       <Navbar />
       <div className="scroll-area">
-        <div className="container" style={{ maxWidth: "1100px" }}>
-          <div style={{ marginBottom: "32px" }}>
-            <button onClick={() => navigate(-1)} className="btn btn-ghost" style={{ padding: "8px 16px", fontSize: "13px", marginBottom: "16px" }}>
+        <div className="container booking-container">
+          <div className="booking-header">
+            <button onClick={() => navigate(-1)} className="btn btn-ghost btn-back">
               ← Back to Results
             </button>
-            <h1 style={{ fontSize: "32px", fontWeight: "800", color: "var(--text-heading)" }}>Finalize Your Journey</h1>
+            <h1 className="page-title">Finalize Your Journey</h1>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "32px", alignItems: "start" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-              <div className="glass-card" style={{ padding: "28px" }}>
-                <h3 style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "20px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Flight Summary</h3>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div className="booking-layout">
+            <div className="booking-form-column">
+              <div className="glass-card booking-section-card">
+                <h3 className="section-label">Flight Summary</h3>
+                <div className="flight-summary-row">
                   <div>
-                    <div style={{ fontSize: "28px", fontWeight: "800", color: "var(--text-heading)" }}>{formatTime(flight.departureTime)}</div>
-                    <div style={{ fontWeight: "600", color: "var(--text-dim)" }}>{flight.fromPlace}</div>
+                    <div className="flight-time">{formatTime(flight.departureTime)}</div>
+                    <div className="flight-place">{flight.fromPlace}</div>
                   </div>
-                  <div style={{ textAlign: "center", flex: 1, padding: "0 40px" }}>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", marginBottom: "4px" }}>{flight.flightNumber}</div>
-                    <div style={{ height: "1px", background: "var(--glass-border)", position: "relative" }}>
-                      <div style={{ position: "absolute", top: "-10px", left: "50%", transform: "translateX(-50%)", fontSize: "16px" }}>✈</div>
+                  <div className="flight-route-center">
+                    <div className="flight-number-label">{flight.flightNumber}</div>
+                    <div className="flight-line-container">
+                      <div className="flight-line-bar">
+                        <div className="flight-plane-icon">✈</div>
+                      </div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "28px", fontWeight: "800", color: "var(--text-heading)" }}>{formatTime(flight.arrivalTime)}</div>
-                    <div style={{ fontWeight: "600", color: "var(--text-dim)" }}>{flight.toPlace}</div>
+                  <div className="text-right">
+                    <div className="flight-time">{formatTime(flight.arrivalTime)}</div>
+                    <div className="flight-place">{flight.toPlace}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="glass-card" style={{ padding: "28px" }}>
-                <h3 style={{ fontSize: "16px", color: "var(--text-heading)", marginBottom: "20px" }}>Select Cabin Class</h3>
+              <div className="glass-card booking-section-card">
+                <h3 className="card-title">Select Cabin Class</h3>
                 <div className="grid grid-cols-2">
                   {["ECONOMY", "BUSINESS"].map((cls) => (
                     <button
                       key={cls}
                       onClick={() => setSeatClass(cls)}
-                      className="glass-card"
-                      style={{
-                        padding: "20px",
-                        textAlign: "left",
-                        cursor: "pointer",
-                        borderWidth: "2px",
-                        borderColor: seatClass === cls ? "var(--accent)" : "var(--glass-border)",
-                        background: seatClass === cls ? "rgba(61, 90, 254, 0.1)" : "transparent"
-                      }}
+                      className={`glass-card cabin-option ${seatClass === cls ? "cabin-option-selected" : ""}`}
                     >
-                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>{cls === "ECONOMY" ? "💺" : "👑"}</div>
-                      <div style={{ fontWeight: "800", color: "var(--text-heading)", textTransform: "uppercase", fontSize: "14px" }}>{cls}</div>
-                      <div style={{ fontSize: "12px", color: "var(--text-dim)", marginTop: "4px" }}>
+                      <div className="cabin-icon">{cls === "ECONOMY" ? "💺" : "👑"}</div>
+                      <div className="cabin-name">{cls}</div>
+                      <div className="cabin-price">
                         ₹{(cls === "BUSINESS" ? Number(flight.ticketCost) * businessPremium : Number(flight.ticketCost)).toLocaleString("en-IN")} per passenger
                       </div>
                     </button>
@@ -150,13 +156,13 @@ export default function BookingPage() {
                 </div>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div className="passengers-column">
                 {passengers.map((passenger, index) => (
-                  <div key={index} className="glass-card animate-slide-up" style={{ padding: "28px", position: "relative" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                      <h3 style={{ fontSize: "16px", color: "var(--text-heading)" }}>Passenger {index + 1} Details</h3>
+                  <div key={index} className="glass-card animate-slide-up passenger-card">
+                    <div className="passenger-card-header">
+                      <h3 className="card-title">Passenger {index + 1} Details</h3>
                       {passengers.length > 1 && (
-                        <button className="btn btn-danger" onClick={() => removePassenger(index)} style={{ padding: "4px 12px", fontSize: "12px" }}>
+                        <button className="btn btn-danger btn-xs" onClick={() => removePassenger(index)}>
                           Remove
                         </button>
                       )}
@@ -166,26 +172,26 @@ export default function BookingPage() {
                       <div className="input-group">
                         <label className="input-label">First Name *</label>
                         <input className="input-field" placeholder="First Name" value={passenger.firstName}
-                          onChange={e => updatePassenger(index, 'firstName', e.target.value)} />
+                          onChange={e => updatePassenger(index, "firstName", e.target.value)} />
                       </div>
                       <div className="input-group">
                         <label className="input-label">Last Name *</label>
                         <input className="input-field" placeholder="Last Name" value={passenger.lastName}
-                          onChange={e => updatePassenger(index, 'lastName', e.target.value)} />
+                          onChange={e => updatePassenger(index, "lastName", e.target.value)} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2">
                       <div className="input-group">
                         <label className="input-label">Gender</label>
-                        <select className="input-field" value={passenger.gender} onChange={e => updatePassenger(index, 'gender', e.target.value)}>
+                        <select className="input-field" value={passenger.gender} onChange={e => updatePassenger(index, "gender", e.target.value)}>
                           <option value="MALE">Male</option>
                           <option value="FEMALE">Female</option>
                         </select>
                       </div>
                       <div className="input-group">
                         <label className="input-label">Meal Preference</label>
-                        <select className="input-field" value={passenger.mealPreference} onChange={e => updatePassenger(index, 'mealPreference', e.target.value)}>
-                          {MEAL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                        <select className="input-field" value={passenger.mealPreference} onChange={e => updatePassenger(index, "mealPreference", e.target.value)}>
+                          {MEAL_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                         </select>
                       </div>
                     </div>
@@ -193,71 +199,86 @@ export default function BookingPage() {
                       <div className="input-group">
                         <label className="input-label">Passport Number (Optional)</label>
                         <input className="input-field" placeholder="Passport No." value={passenger.passportNumber}
-                          onChange={e => updatePassenger(index, 'passportNumber', e.target.value)} />
+                          onChange={e => updatePassenger(index, "passportNumber", e.target.value)} />
                       </div>
                       <div className="input-group">
                         <label className="input-label">Date of Birth *</label>
                         <input className="input-field" type="date" value={passenger.dateOfBirth}
-                          onChange={e => updatePassenger(index, 'dateOfBirth', e.target.value)} />
+                          onChange={e => updatePassenger(index, "dateOfBirth", e.target.value)} />
                       </div>
                     </div>
                   </div>
                 ))}
 
-                <button className="btn btn-ghost" onClick={addPassenger} style={{ width: "100%", padding: "16px", borderStyle: "dashed" }}>
+                <button className="btn btn-ghost add-passenger-btn" onClick={addPassenger}>
                   + Add Another Passenger
                 </button>
               </div>
+
+              <div className="glass-card booking-section-card">
+                <h3 className="card-title">Payment Method</h3>
+                <div className="payment-methods-grid">
+                  {PAYMENT_METHODS.map((pm) => (
+                    <button
+                      key={pm.value}
+                      onClick={() => setPaymentMethod(pm.value)}
+                      className={`payment-method-card ${paymentMethod === pm.value ? "payment-method-selected" : ""}`}
+                    >
+                      <div className="payment-method-icon">{pm.label.split(" ")[0]}</div>
+                      <div className="payment-method-name">{pm.label.substring(pm.label.indexOf(" ") + 1)}</div>
+                      <div className="payment-method-desc">{pm.desc}</div>
+                      {paymentMethod === pm.value && <div className="payment-method-check">✓</div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div style={{ position: "sticky", top: "0" }}>
-              <div className="glass-card" style={{ padding: "32px", borderTop: "4px solid var(--accent)" }}>
-                <h3 style={{ fontSize: "18px", fontWeight: "800", color: "var(--text-heading)", marginBottom: "24px" }}>Order Summary</h3>
+            <div className="booking-summary-sticky">
+              <div className="glass-card booking-summary-card">
+                <h3 className="summary-title">Order Summary</h3>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-                    <span style={{ color: "var(--text-dim)" }}>Passengers</span>
-                    <span style={{ color: "var(--text-heading)", fontWeight: "600" }}>{passengers.length}</span>
+                <div className="summary-items">
+                  <div className="summary-row">
+                    <span className="summary-label">Passengers</span>
+                    <span className="summary-value">{passengers.length}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-                    <span style={{ color: "var(--text-dim)" }}>Base Fare ({seatClass})</span>
-                    <span style={{ color: "var(--text-heading)", fontWeight: "600" }}>₹{Number(flight.ticketCost).toLocaleString("en-IN")} x {passengers.length}</span>
+                  <div className="summary-row">
+                    <span className="summary-label">Base Fare ({seatClass})</span>
+                    <span className="summary-value">₹{Number(flight.ticketCost).toLocaleString("en-IN")} x {passengers.length}</span>
                   </div>
                   {seatClass === "BUSINESS" && (
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-                      <span style={{ color: "var(--text-dim)" }}>Cabin Upgrade</span>
-                      <span style={{ color: "var(--text-heading)", fontWeight: "600" }}>₹{(Number(flight.ticketCost) * (businessPremium - 1)).toLocaleString("en-IN")} x {passengers.length}</span>
+                    <div className="summary-row">
+                      <span className="summary-label">Cabin Upgrade</span>
+                      <span className="summary-value">₹{(Number(flight.ticketCost) * (businessPremium - 1)).toLocaleString("en-IN")} x {passengers.length}</span>
                     </div>
                   )}
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "14px" }}>
-                    <span style={{ color: "var(--text-dim)" }}>Taxes & Fees</span>
-                    <span style={{ color: "var(--success)", fontWeight: "700" }}>INCLUDED</span>
+                  <div className="summary-row">
+                    <span className="summary-label">Taxes & Fees</span>
+                    <span className="summary-value-success">INCLUDED</span>
                   </div>
                 </div>
 
-                <div style={{ borderTop: "1px solid var(--glass-border)", paddingTop: "20px", marginBottom: "32px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontSize: "16px", fontWeight: "700", color: "var(--text-heading)" }}>Total Amount</span>
-                    <span style={{ fontSize: "28px", fontWeight: "800", color: "var(--cyan)" }}>₹{price.toLocaleString("en-IN")}</span>
-                  </div>
+                <div className="summary-total-row">
+                  <span className="summary-total-label">Total Amount</span>
+                  <span className="summary-total-value">₹{price.toLocaleString("en-IN")}</span>
                 </div>
 
-                {error && <div className="badge badge-danger" style={{ width: "100%", padding: "12px", marginBottom: "20px", textAlign: "center", whiteSpace: "normal", lineHeight: "1.4" }}>⚠ {error}</div>}
+                {error && (
+                  <div className="badge badge-danger booking-error-msg">⚠ {error}</div>
+                )}
 
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary booking-confirm-btn"
                   onClick={handleConfirm}
                   disabled={loading}
-                  style={{ width: "100%", height: "56px", fontSize: "16px" }}
                 >
                   {loading ? "Processing..." : "Complete Booking →"}
                 </button>
 
-                <div style={{ marginTop: "24px", textAlign: "center" }}>
-                  <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                    🔒 Secure 256-bit SSL Encrypted Payment
-                  </p>
-                </div>
+                <p className="booking-security-note">
+                  🔒 Secure 256-bit SSL Encrypted Payment
+                </p>
               </div>
             </div>
           </div>

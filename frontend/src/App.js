@@ -12,6 +12,8 @@ import BookingHistoryPage from "./pages/Booking/BookingHistoryPage";
 import BookingConfirmationPage from "./pages/Booking/BookingConfirmationPage";
 import AdminPage from "./pages/Admin/AdminPage";
 import BoardingPassPage from "./pages/Booking/BoardingPassPage";
+import PresentationPage from "./pages/PresentationPage";
+import ArchitectureDiagram from "./pages/ArchitectureDiagram";
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
@@ -29,6 +31,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/" element={<UserPage />} />
+      <Route path="/admin-redirect" element={<Navigate to="/admin" />} />
       <Route path="/results" element={<ResultsPage />} />
 
       <Route path="/booking" element={<ProtectedRoute><BookingPage /></ProtectedRoute>} />
@@ -37,6 +40,9 @@ function AppRoutes() {
       <Route path="/boarding-pass" element={<ProtectedRoute><BoardingPassPage /></ProtectedRoute>} />
 
       <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+
+      <Route path="/present" element={<PresentationPage />} />
+      <Route path="/diagram" element={<ArchitectureDiagram />} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

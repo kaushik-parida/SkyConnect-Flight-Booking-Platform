@@ -1,90 +1,110 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import { getBookingById } from "../../services/api";
 
 export default function BookingConfirmationPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { bookingId, flight, seatClass, totalAmount, passenger } = state || {};
+  const { bookingId, flight, seatClass, totalAmount, passengers } = state || {};
+  const [bookingReference, setBookingReference] = useState(null);
 
   useEffect(() => {
-    if (!bookingId) navigate("/");
+    if (!bookingId) {
+      navigate("/");
+      return;
+    }
+    const fetchBooking = async () => {
+      try {
+        const data = await getBookingById(bookingId);
+        if (data && data.bookingReference) {
+          setBookingReference(data.bookingReference);
+        }
+      } catch (err) {
+        console.error("Failed to fetch booking details", err);
+      }
+    };
+    fetchBooking();
   }, [bookingId, navigate]);
 
   if (!bookingId) return null;
 
+  const passengerList = passengers && passengers.length > 0 ? passengers : [];
+  const primaryPassenger = passengerList[0];
+
   return (
     <div className="app-container">
       <Navbar />
-      <main className="scroll-area" style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 72px)", overflow: "hidden" }}>
-        <div className="container animate-slide-up" style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", maxWidth: "1200px" }}>
+      <main className="scroll-area confirmation-scroll">
+        <div className="container animate-slide-up confirmation-container">
 
-          <div className="glass-card" style={{ display: "flex", flexDirection: "row", overflow: "hidden", width: "100%", borderTop: "4px solid var(--success)", boxShadow: "0 24px 64px rgba(5,150,105,0.12), 0 4px 16px rgba(0,0,0,0.06)" }}>
+          <div className="glass-card confirmation-card">
 
-            <div style={{ flex: 1, background: "linear-gradient(135deg, rgba(5,150,105,0.05), rgba(5,150,105,0.15))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 40px", borderRight: "1px dashed var(--glass-border)" }}>
-              <div style={{
-                width: "120px", height: "120px", borderRadius: "50%", margin: "0 auto 32px",
-                background: "#fff",
-                border: "2px solid rgba(5,150,105,0.35)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "56px", boxShadow: "0 0 0 12px rgba(5,150,105,0.1)",
-                color: "var(--success)"
-              }}>✓</div>
-              <h1 style={{ fontSize: "42px", fontWeight: "900", marginBottom: "16px", color: "var(--text-heading)", fontFamily: "'Outfit',sans-serif", textAlign: "center" }}>Booking Confirmed!</h1>
-              <p style={{ color: "var(--text-dim)", fontSize: "16px", textAlign: "center", maxWidth: "340px", lineHeight: "1.6" }}>
+            <div className="confirmation-left">
+              <div className="confirmation-check-circle">✓</div>
+              <h1 className="confirmation-title">Booking Confirmed!</h1>
+              <p className="confirmation-subtitle">
                 Your flight reservation has been processed successfully. Prepare for a wonderful journey with SkyConnect.
               </p>
+              {passengerList.length > 1 && (
+                <div className="passenger-count-badge">
+                  {passengerList.length} passengers booked
+                </div>
+              )}
             </div>
 
-            <div style={{ flex: 1.2, padding: "50px 60px", background: "#fff", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div className="confirmation-right">
 
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "32px" }}>
+                <div className="confirmation-ref-row">
                   <div>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "8px", fontWeight: "700" }}>Booking Reference</div>
-                    <div style={{ fontSize: "48px", fontWeight: "900", color: "var(--accent)", letterSpacing: "2px", fontFamily: "'Outfit',sans-serif", lineHeight: "1" }}>
-                      #{bookingId}
-                    </div>
+                    <div className="confirmation-ref-label">Booking Reference</div>
+                    <div className="confirmation-ref-value">{bookingReference || `#${bookingId}`}</div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "8px", fontWeight: "700" }}>Amount Paid</div>
-                    <div style={{ fontWeight: "900", fontSize: "28px", color: "var(--success)", fontFamily: "'Outfit',sans-serif", lineHeight: "1" }}>
-                      {totalAmount ? `₹${Number(totalAmount).toLocaleString("en-IN")}` : "—"}
-                    </div>
+                  <div className="text-right">
+                    <div className="confirmation-ref-label">Amount Paid</div>
+                    <div className="confirmation-amount">{totalAmount ? `₹${Number(totalAmount).toLocaleString("en-IN")}` : "—"}</div>
                   </div>
                 </div>
 
-                <div style={{ height: "1px", background: "rgba(148,163,184,0.2)", margin: "0 0 32px" }} />
+                <div className="confirmation-divider" />
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "28px" }}>
+                <div className="grid grid-cols-2 confirmation-details-grid">
                   <div>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", fontWeight: "700" }}>Flight Number</div>
-                    <div style={{ fontWeight: "800", fontSize: "18px", color: "var(--text-heading)" }}>{flight?.flightNumber || "SK-SKY"}</div>
+                    <div className="confirmation-detail-label">Flight Number</div>
+                    <div className="confirmation-detail-value">{flight?.flightNumber || "SK-SKY"}</div>
                   </div>
                   <div>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", fontWeight: "700" }}>Cabin Class</div>
-                    <div style={{ fontWeight: "800", fontSize: "18px", color: "var(--text-heading)" }}>{seatClass}</div>
+                    <div className="confirmation-detail-label">Cabin Class</div>
+                    <div className="confirmation-detail-value">{seatClass}</div>
                   </div>
-                  <div style={{ gridColumn: "span 2" }}>
-                    <div style={{ fontSize: "11px", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", fontWeight: "700" }}>Route Details</div>
-                    <div style={{ fontWeight: "800", fontSize: "20px", color: "var(--text-heading)", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div className="grid-span-2">
+                    <div className="confirmation-detail-label">Route Details</div>
+                    <div className="confirmation-route">
                       <span>{flight?.fromPlace}</span>
-                      <span style={{ color: "var(--accent)" }}>✈</span>
+                      <span className="text-accent">✈</span>
                       <span>{flight?.toPlace}</span>
                     </div>
                   </div>
+                  {primaryPassenger && (
+                    <div className="grid-span-2">
+                      <div className="confirmation-detail-label">Lead Passenger</div>
+                      <div className="confirmation-detail-value">{primaryPassenger.firstName} {primaryPassenger.lastName}</div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: "16px", marginTop: "48px" }}>
+              <div className="confirmation-actions">
                 <button
-                  className="btn btn-primary"
-                  onClick={() => navigate("/boarding-pass", { state: { bookingId, flight, seatClass, totalAmount, passenger } })}
-                  style={{ flex: 1.5, fontSize: "15px", padding: "16px", borderRadius: "12px" }}
+                  className="btn btn-primary confirmation-btn-primary"
+                  onClick={() => navigate("/boarding-pass", {
+                    state: { bookingId, bookingReference, flight, seatClass, totalAmount, passengers: passengerList }
+                  })}
                 >
-                  🎫 View Boarding Pass
+                  🎫 View Boarding Pass{passengerList.length > 1 ? "es" : ""}
                 </button>
-                <button className="btn btn-ghost" onClick={() => navigate("/booking/history")} style={{ flex: 1, fontSize: "15px", padding: "16px", borderRadius: "12px" }}>
+                <button className="btn btn-ghost confirmation-btn-secondary" onClick={() => navigate("/booking/history")}>
                   My Bookings
                 </button>
               </div>

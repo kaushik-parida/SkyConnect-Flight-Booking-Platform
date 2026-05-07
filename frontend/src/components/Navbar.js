@@ -1,15 +1,18 @@
 import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated, isAdmin } = useAuth();
+  const fromPresentation = location.state?.fromPresentation === true;
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
 
   return (
     <nav>
@@ -32,6 +35,21 @@ export default function Navbar() {
         </Link>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {fromPresentation && (
+            <button
+              onClick={() => navigate("/present")}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                padding: "6px 14px", borderRadius: "99px",
+                background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.4)",
+                color: "#818CF8", fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                fontFamily: "'Outfit',sans-serif", transition: "all 0.15s",
+              }}
+            >
+              ↩ Back to Slides
+            </button>
+          )}
+
           {isAuthenticated && !isAdmin && (
             <Link to="/booking/history" style={{
               fontSize: "13px", fontWeight: "600", color: "var(--text-dim)",
