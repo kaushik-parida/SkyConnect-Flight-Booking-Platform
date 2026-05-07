@@ -2,6 +2,7 @@ package com.flightapp.booking.service.implementation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ import com.flightapp.booking.dto.PassengerResponse;
 import com.flightapp.booking.dto.external.FlightResponse;
 import com.flightapp.booking.exception.BookingAlreadyCancelledException;
 import com.flightapp.booking.exception.BookingNotFoundException;
+import com.flightapp.booking.exception.CancellationNotAllowedException;
 import com.flightapp.booking.exception.DuplicateBookingException;
 import com.flightapp.booking.exception.FlightNotActiveException;
 import com.flightapp.booking.exception.InsufficientSeatsException;
@@ -180,6 +182,70 @@ public class BookingServiceImplementation implements BookingService {
 		return CancelBookingResponse.builder().bookingId(booking.getBookingId())
 				.bookingReference(booking.getBookingReference()).status(BookingStatus.CANCELLED)
 				.message("Booking cancelled successfully. Refund will be processed in 5-7 business days.")
+				.cancelledAt(LocalDateTime.now()).build();
+	}
+
+	@Override
+	@Transactional
+	public CancelBookingResponse cancelPassengers(String bookingReference, java.util.List<Long> passengerIds,
+			String userId) {
+		Booking booking = bookingRepository.findByBookingReference(bookingReference)
+				.orElseThrow(() -> new BookingNotFoundException("Booking with ref " + bookingReference + " not found"));
+
+		if (!booking.getUserId().equals(userId)) {
+			throw new UnauthorizedBookingAccessException("User not authorized to modify this booking");
+		}
+
+		if (booking.getStatus() == BookingStatus.CANCELLED) {
+			throw new CancellationNotAllowedException("Booking is already cancelled");
+		}
+
+		if (booking.getDepartureTime().minusHours(24).isBefore(LocalDateTime.now())) {
+			throw new CancellationNotAllowedException("Cancellation is only allowed up to 24 hours before departure.");
+		}
+
+		if (passengerIds.size() >= booking.getPassengers().size()) {
+			return cancelBooking(bookingReference, userId);
+		}
+
+		List<BookingPassenger> passengersToRemove = new ArrayList<>();
+		for (BookingPassenger p : booking.getPassengers()) {
+			if (passengerIds.contains(p.getPassengerId())) {
+				passengersToRemove.add(p);
+			}
+		}
+
+		if (passengersToRemove.isEmpty()) {
+			throw new IllegalArgumentException("No matching passengers found in this booking");
+		}
+
+		int initialSeats = booking.getNumberOfSeats();
+		BigDecimal initialPrice = booking.getTotalPrice();
+		BigDecimal unitPrice = initialPrice.divide(BigDecimal.valueOf(initialSeats), 2, java.math.RoundingMode.HALF_UP);
+		int removedCount = passengersToRemove.size();
+
+		booking.getPassengers().removeAll(passengersToRemove);
+		booking.setNumberOfSeats(initialSeats - removedCount);
+		booking.setTotalPrice(initialPrice.subtract(unitPrice.multiply(BigDecimal.valueOf(removedCount))));
+
+		if (booking.getPayment() != null) {
+			booking.getPayment().setAmount(booking.getTotalPrice());
+		}
+
+		bookingRepository.save(booking);
+		log.info("Partial cancellation — ref: {}, passengers removed: {}", booking.getBookingReference(), removedCount);
+
+		try {
+			flightServiceClient.restoreSeats(booking.getFlightId(), removedCount, booking.getSeatClass());
+		} catch (Exception e) {
+			log.warn("Partial seat restoration failed — ref: {} reason: {}", booking.getBookingReference(),
+					e.getMessage());
+		}
+
+		return CancelBookingResponse.builder().bookingId(booking.getBookingId())
+				.bookingReference(booking.getBookingReference()).status(booking.getStatus())
+				.message("Successfully cancelled " + removedCount
+						+ " passenger(s). Partial refund will be processed in 5-7 business days.")
 				.cancelledAt(LocalDateTime.now()).build();
 	}
 

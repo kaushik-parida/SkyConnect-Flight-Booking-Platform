@@ -13,12 +13,14 @@ public interface BookingService {
 	BookingResponse getBookingById(Long bookingId);
 
 	Page<BookingResponse> getBookingsByUserId(String userId, Pageable pageable);
-	
+
 	BookingResponse getBookingByBookingReference(String bookingReference);
 
 	Page<BookingResponse> getAllBookings(Pageable pageable);
-	
+
 	CancelBookingResponse cancelBooking(String bookingReference, String userId);
+
+	CancelBookingResponse cancelPassengers(String bookingReference, java.util.List<Long> passengerIds, String userId);
 
 	CancelBookingResponse cancelBookingById(Long bookingId, String userId);
 }

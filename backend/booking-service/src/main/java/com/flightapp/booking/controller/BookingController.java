@@ -95,6 +95,18 @@ public class BookingController {
 		return ResponseEntity.ok(bookingService.cancelBooking(bookingReference, userId));
 	}
 
+	@PatchMapping("/cancel/{bookingReference}/passengers")
+	@Operation(summary = "Cancel specific passengers", description = "Cancels specific passengers from a booking using the PNR reference")
+	@ApiResponse(responseCode = "200", description = "Cancelled successfully")
+	@ApiResponse(responseCode = "400", description = "Cancellation not allowed (within 24h)")
+	@ApiResponse(responseCode = "404", description = "Booking or Passenger not found")
+	public ResponseEntity<CancelBookingResponse> cancelPassengers(
+			@Parameter(description = "PNR Reference") @PathVariable String bookingReference,
+			@Parameter(description = "User ID") @RequestParam String userId,
+			@RequestBody java.util.List<Long> passengerIds) {
+		return ResponseEntity.ok(bookingService.cancelPassengers(bookingReference, passengerIds, userId));
+	}
+
 	@PatchMapping("/cancel/id/{bookingId}")
 	@Operation(summary = "Cancel booking by ID", description = "Cancels a booking using the internal booking ID")
 	@ApiResponse(responseCode = "200", description = "Cancelled successfully")

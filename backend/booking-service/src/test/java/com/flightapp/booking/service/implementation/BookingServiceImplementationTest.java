@@ -509,4 +509,68 @@ public class BookingServiceImplementationTest {
 		verify(bookingRepository).save(org.mockito.ArgumentMatchers.argThat(
 				b -> b.getTotalPrice().compareTo(expectedPrice) == 0 && b.getSeatClass() == SeatClass.BUSINESS));
 	}
+
+	@Test
+	@DisplayName("cancelPassengers: should successfully cancel specific passengers and proportionally refund")
+	void test_cancelPassengers_success() {
+		BookingPassenger p1 = BookingPassenger.builder().passengerId(10L).firstName("Rahul").build();
+		BookingPassenger p2 = BookingPassenger.builder().passengerId(11L).firstName("Priya").build();
+
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.departureTime(LocalDateTime.now().plusDays(2)).numberOfSeats(2).totalPrice(BigDecimal.valueOf(9000.0))
+				.seatClass(SeatClass.ECONOMY).status(BookingStatus.CONFIRMED)
+				.passengers(new java.util.ArrayList<>(List.of(p1, p2))).build();
+
+		Payment payment = Payment.builder().paymentStatus(PaymentStatus.SUCCESS).amount(BigDecimal.valueOf(9000.0))
+				.build();
+		booking.setPayment(payment);
+
+		when(bookingRepository.findByBookingReference("FLY1234567")).thenReturn(Optional.of(booking));
+		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
+
+		CancelBookingResponse response = bookingService.cancelPassengers("FLY1234567", List.of(10L), "USER-001");
+
+		assertEquals(BookingStatus.CONFIRMED, response.getStatus()); // Main booking is still confirmed
+		assertEquals(1, booking.getNumberOfSeats());
+		assertEquals(0, BigDecimal.valueOf(4500.0).compareTo(booking.getTotalPrice()));
+		assertEquals(1, booking.getPassengers().size());
+		verify(flightServiceClient, times(1)).restoreSeats(1L, 1, SeatClass.ECONOMY);
+	}
+
+	@Test
+	@DisplayName("cancelPassengers: should fallback to full cancellation if all passengers are selected")
+	void test_cancelPassengers_allPassengers_fallbackToCancelBooking() {
+		BookingPassenger p1 = BookingPassenger.builder().passengerId(10L).firstName("Rahul").build();
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.departureTime(LocalDateTime.now().plusDays(2)).numberOfSeats(1).totalPrice(BigDecimal.valueOf(4500.0))
+				.seatClass(SeatClass.ECONOMY).status(BookingStatus.CONFIRMED)
+				.passengers(new java.util.ArrayList<>(List.of(p1))).build();
+
+		when(bookingRepository.findByBookingReference("FLY1234567")).thenReturn(Optional.of(booking));
+		when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
+		doNothing().when(flightServiceClient).restoreSeats(anyLong(), anyInt(), eq(SeatClass.ECONOMY));
+
+		CancelBookingResponse response = bookingService.cancelPassengers("FLY1234567", List.of(10L), "USER-001");
+
+		assertEquals(BookingStatus.CANCELLED, response.getStatus());
+		verify(flightServiceClient, times(1)).restoreSeats(1L, 1, SeatClass.ECONOMY);
+	}
+
+	@Test
+	@DisplayName("cancelPassengers: should throw IllegalArgumentException if no matching passengers found")
+	void test_cancelPassengers_noMatchingPassengers() {
+		BookingPassenger p1 = BookingPassenger.builder().passengerId(10L).firstName("Rahul").build();
+		BookingPassenger p2 = BookingPassenger.builder().passengerId(11L).firstName("Priya").build();
+
+		Booking booking = Booking.builder().bookingId(1L).bookingReference("FLY1234567").userId("USER-001").flightId(1L)
+				.departureTime(LocalDateTime.now().plusDays(2)).numberOfSeats(2).totalPrice(BigDecimal.valueOf(9000.0))
+				.seatClass(SeatClass.ECONOMY).status(BookingStatus.CONFIRMED)
+				.passengers(new java.util.ArrayList<>(List.of(p1, p2))).build();
+
+		when(bookingRepository.findByBookingReference("FLY1234567")).thenReturn(Optional.of(booking));
+
+		assertThrows(IllegalArgumentException.class,
+				() -> bookingService.cancelPassengers("FLY1234567", List.of(99L), "USER-001"));
+	}
 }
